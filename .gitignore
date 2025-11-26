@@ -23,6 +23,10 @@ Thumbs.db
 .env.development
 .env.production
 
+# 환경변수 템플릿 (Git에 포함되어야 함 - 명시적으로 예외 처리)
+!.env.template
+!.env.example
+
 # Python
 __pycache__/
 *.py[cod]
@@ -53,9 +57,13 @@ wheels/
 *.egg
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 *.cover
 .hypothesis/
+.mypy_cache/
+.ruff_cache/
+.python-version
 
 # Node.js / Next.js
 node_modules/
