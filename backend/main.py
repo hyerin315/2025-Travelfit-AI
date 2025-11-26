@@ -28,13 +28,15 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS 설정
+# CORS 설정 (모든 라우터 등록 전에 설정해야 함)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins_list,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 # 요청 로깅 미들웨어
@@ -43,7 +45,21 @@ async def log_requests(request: Request, call_next):
     """모든 요청 로깅"""
     start_time = time.time()
     
-    logger.info(f"➡️  {request.method} {request.url.path}")
+    # OPTIONS 요청에 대한 CORS preflight 처리
+    if request.method == "OPTIONS":
+        logger.info(f"🔄 OPTIONS preflight: {request.url.path}")
+        from fastapi.responses import Response
+        response = Response()
+        origin = request.headers.get("origin")
+        if origin and origin in settings.allowed_origins_list:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Max-Age"] = "3600"
+        return response
+    
+    logger.info(f"➡️  {request.method} {request.url.path} | Origin: {request.headers.get('origin', 'N/A')}")
     
     response = await call_next(request)
     
@@ -84,13 +100,20 @@ async def health_check():
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """전역 에러 핸들러"""
-    logger.error(f"❌ Unhandled exception: {str(exc)}", exc_info=True)
+    import traceback
+    error_traceback = traceback.format_exc()
+    
+    logger.error(f"❌ Unhandled exception: {str(exc)}")
+    logger.error(f"   요청: {request.method} {request.url.path}")
+    logger.error(f"   상세 에러:\n{error_traceback}")
     
     return JSONResponse(
         status_code=500,
         content={
             "detail": "내부 서버 오류가 발생했습니다.",
-            "error": str(exc) if settings.DEBUG else "Internal Server Error"
+            "error": str(exc) if settings.DEBUG else "Internal Server Error",
+            "path": request.url.path,
+            "method": request.method
         }
     )
 

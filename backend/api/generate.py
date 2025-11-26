@@ -93,10 +93,13 @@ async def generate_images(request: ImageGenerationRequest):
         logger.info(f"✅ 이미지 생성 완료: {len(images_data)}개, {elapsed_time:.2f}초")
     
     except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
         logger.error(f"❌ 이미지 생성 실패: {str(e)}")
+        logger.error(f"   상세 에러:\n{error_traceback}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 생성 중 오류가 발생했습니다: {str(e)}"
+            detail=f"이미지 생성 중 오류가 발생했습니다: {str(e)}" if settings.DEBUG else "이미지 생성 중 오류가 발생했습니다."
         )
     
     # 5. 생성 히스토리 저장
