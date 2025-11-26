@@ -20,12 +20,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # FastAPI 앱 초기화
+# 보안: 프로덕션에서는 Swagger UI 비활성화
 app = FastAPI(
     title="Travel-Fit AI API",
     description="여행 마케터를 위한 AI 이미지 생성 API",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url="/docs" if settings.DEBUG else None,  # DEBUG 모드에서만 활성화
+    redoc_url="/redoc" if settings.DEBUG else None  # DEBUG 모드에서만 활성화
 )
 
 # CORS 설정 (모든 라우터 등록 전에 설정해야 함)
@@ -128,7 +129,10 @@ async def startup_event():
     logger.info(f"📁 이미지 저장 경로: {settings.GENERATED_IMAGES_DIR}")
     logger.info(f"🔑 API 토큰 설정: {'✅ 완료' if settings.HUGGINGFACE_API_TOKEN else '❌ 미설정'}")
     logger.info(f"🌐 CORS 허용 Origin: {settings.allowed_origins_list}")
-    logger.info(f"📚 API 문서: http://{settings.HOST}:{settings.PORT}/docs")
+    if settings.DEBUG:
+        logger.info(f"📚 API 문서: http://{settings.HOST}:{settings.PORT}/docs (DEBUG 모드)")
+    else:
+        logger.info(f"🔒 API 문서: 비활성화됨 (프로덕션 모드)")
     logger.info("=" * 60)
     
     # 설정 검증
