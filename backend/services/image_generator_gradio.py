@@ -91,14 +91,48 @@ class GradioImageGenerator:
             logger.info(f"🔄 Gradio Space (SD 3.5 Large) 연결 중...")
             logger.info(f"   Space: {self.space_name}")
             
-            # Client 생성 (token 파라미터로 직접 전달)
-            # 최신 gradio-client는 token 파라미터 지원
-            if settings.HUGGINGFACE_API_TOKEN:
-                client = Client(self.space_name, token=settings.HUGGINGFACE_API_TOKEN)
-                logger.info(f"🔑 Hugging Face 토큰 사용 (token 파라미터)")
-            else:
-                logger.warning(f"⚠️ Hugging Face 토큰이 설정되지 않았습니다 (공개 Space는 토큰 불필요)")
-                client = Client(self.space_name)
+            # Client 생성 (재시도 로직 포함)
+            # 타임아웃 문제 해결을 위한 재시도 및 환경 변수 설정
+            import os
+            import httpx
+            
+            # httpx 기본 타임아웃 환경 변수 설정 (Gradio Client가 사용)
+            # 연결 및 읽기 타임아웃을 늘림
+            os.environ["HTTPX_DEFAULT_TIMEOUT"] = "60.0"
+            
+            # Client 생성 재시도 로직
+            max_retries = 3
+            retry_count = 0
+            client = None
+            
+            while retry_count < max_retries:
+                try:
+                    if settings.HUGGINGFACE_API_TOKEN:
+                        client = Client(
+                            self.space_name,
+                            token=settings.HUGGINGFACE_API_TOKEN
+                        )
+                        logger.info(f"🔑 Hugging Face 토큰 사용 (token 파라미터)")
+                    else:
+                        logger.warning(f"⚠️ Hugging Face 토큰이 설정되지 않았습니다 (공개 Space는 토큰 불필요)")
+                        client = Client(self.space_name)
+                    
+                    logger.info(f"✅ Gradio Client 연결 성공")
+                    break  # 성공 시 루프 탈출
+                    
+                except (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.TimeoutException) as e:
+                    retry_count += 1
+                    if retry_count >= max_retries:
+                        logger.error(f"❌ Gradio Client 생성 타임아웃 (재시도 {retry_count}회): {str(e)}")
+                        raise Exception(f"Gradio Space 연결 타임아웃: {str(e)}. Space가 응답하지 않거나 네트워크 연결 문제가 있을 수 있습니다.")
+                    else:
+                        wait_time = retry_count * 3  # 3초, 6초, 9초 대기
+                        logger.warning(f"⚠️ Gradio Client 연결 타임아웃 - 재시도 중... ({retry_count}/{max_retries}, {wait_time}초 후)")
+                        time.sleep(wait_time)
+                except Exception as e:
+                    # 타임아웃이 아닌 다른 에러는 즉시 실패
+                    logger.error(f"❌ Gradio Client 생성 실패: {str(e)}")
+                    raise
             
             images_data = []
             
