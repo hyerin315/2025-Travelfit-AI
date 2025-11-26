@@ -3,6 +3,7 @@
 환경 변수를 통해 API 키 및 설정값 관리
 """
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from typing import List
 import os
 from pathlib import Path
@@ -15,6 +16,22 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     DEBUG: bool = True
+    
+    @field_validator('DEBUG', mode='before')
+    @classmethod
+    def parse_debug(cls, v):
+        """DEBUG 값을 안전하게 파싱 (공백 및 특수문자 제거)
+        프로덕션 환경에서는 False로 설정 권장
+        """
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            # 공백 및 특수문자 제거 후 소문자로 변환
+            v_clean = v.strip().lower()
+            # 제어 문자 제거 (백스페이스, 캐리지리턴, 개행 등)
+            v_clean = ''.join(c for c in v_clean if c.isprintable())
+            return v_clean in ('true', '1', 'yes', 'on')
+        return bool(v)
     
     # API 키
     HUGGINGFACE_API_TOKEN: str = ""
