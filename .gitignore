@@ -1,0 +1,108 @@
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# 환경변수
+.env
+.env.local
+.env*.local
+.env.development
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+# Python 빌드 산출물 (venv/lib은 이미 venv/로 무시됨)
+# frontend/src/lib/은 소스 코드이므로 추적해야 함
+# 따라서 lib/ 패턴 제거하고 build/ 내부만 무시
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# Node.js / Next.js
+node_modules/
+/.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+build/
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# Next.js 자동 생성 파일
+next-env.d.ts
+
+# 생성된 이미지 파일
+generated_images/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+
+# 로그 파일
+*.log
+logs/
+
+# 임시 파일
+tmp/
+temp/
+*.tmp
+
+# 데이터베이스
+*.db
+*.sqlite
+*.sqlite3
+
+# 압축 파일
+*.zip
+*.tar.gz
+*.rar
+
