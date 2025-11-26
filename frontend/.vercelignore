@@ -1,0 +1,18 @@
+# 테스트 파일
+tests/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# 문서
+README.md
+*.md
+
+# 개발 도구
+.eslintrc.json
+.prettierrc
+
+# 로그
+*.log
+

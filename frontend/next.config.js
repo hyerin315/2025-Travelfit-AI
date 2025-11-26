@@ -12,6 +12,16 @@ const nextConfig = {
         port: '8000',
         pathname: '/api/images/**',
       },
+      {
+        protocol: 'https',
+        hostname: '**.railway.app',
+        pathname: '/api/images/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.vercel.app',
+        pathname: '/api/images/**',
+      },
     ],
   },
 }
