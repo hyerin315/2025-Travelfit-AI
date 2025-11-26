@@ -163,7 +163,43 @@ async def get_image(filename: str):
     Returns:
         이미지 파일
     """
-    filepath = settings.GENERATED_IMAGES_DIR / filename
+    # 보안: 경로 탐색 공격 방지 (Path Traversal)
+    # 파일명만 추출 (경로 문자 제거)
+    safe_filename = Path(filename).name
+    
+    # 파일명 검증: UUID 형식 (예: generation_id_0.png)만 허용
+    # 허용된 문자: 영문자, 숫자, 언더스코어, 하이픈, 점
+    if not all(c.isalnum() or c in ('_', '-', '.') for c in safe_filename):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid filename"
+        )
+    
+    # .png 확장자만 허용
+    if not safe_filename.endswith('.png'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only PNG files are allowed"
+        )
+    
+    filepath = settings.GENERATED_IMAGES_DIR / safe_filename
+    
+    # 절대 경로로 변환 후 디렉토리 이탈 방지 검증
+    try:
+        filepath = filepath.resolve()
+        base_path = settings.GENERATED_IMAGES_DIR.resolve()
+        
+        # base_path 내부에 있는지 확인
+        if not str(filepath).startswith(str(base_path)):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+    except (OSError, ValueError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file path"
+        )
     
     if not filepath.exists():
         raise HTTPException(
@@ -174,7 +210,7 @@ async def get_image(filename: str):
     return FileResponse(
         path=filepath,
         media_type="image/png",
-        filename=filename
+        filename=safe_filename
     )
 
 

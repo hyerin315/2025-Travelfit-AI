@@ -34,10 +34,12 @@ async def create_preset(request: PresetCreateRequest):
     
     # 톤앤매너 검증
     if request.tone_manner not in BRAND_PRESETS:
+        # 보안: 프로덕션에서는 상세 정보 최소화
+        from config import settings
+        detail = "Invalid tone_manner" if not settings.DEBUG else f"Invalid tone_manner: {request.tone_manner}. Available: {list(BRAND_PRESETS.keys())}"
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tone_manner: {request.tone_manner}. "
-                   f"Available: {list(BRAND_PRESETS.keys())}"
+            detail=detail
         )
     
     # 브랜드 프리셋 데이터 가져오기
