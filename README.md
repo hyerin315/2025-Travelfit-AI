@@ -120,7 +120,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # 환경 설정 (대화형)
-./setup_env.sh
+./scripts/setup_env.sh
 
 # 서버 실행
 python main.py
