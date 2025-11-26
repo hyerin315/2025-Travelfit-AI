@@ -85,14 +85,20 @@ class GradioImageGenerator:
         """
         from gradio_client import Client
         import random
+        import os
         
         try:
-            # Gradio Client 생성 (Private Space 접근 위해 토큰 전달)
             logger.info(f"🔄 Gradio Space (SD 3.5 Large) 연결 중...")
-            client = Client(
-                self.space_name,
-                hf_token=settings.HUGGINGFACE_API_TOKEN,  # Private Space 접근
-            )
+            logger.info(f"   Space: {self.space_name}")
+            
+            # Client 생성 (token 파라미터로 직접 전달)
+            # 최신 gradio-client는 token 파라미터 지원
+            if settings.HUGGINGFACE_API_TOKEN:
+                client = Client(self.space_name, token=settings.HUGGINGFACE_API_TOKEN)
+                logger.info(f"🔑 Hugging Face 토큰 사용 (token 파라미터)")
+            else:
+                logger.warning(f"⚠️ Hugging Face 토큰이 설정되지 않았습니다 (공개 Space는 토큰 불필요)")
+                client = Client(self.space_name)
             
             images_data = []
             

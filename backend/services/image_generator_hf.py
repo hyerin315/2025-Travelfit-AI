@@ -5,7 +5,6 @@ Hugging Face Hub + fal-ai provider를 사용한 Stable Diffusion 이미지 생�
 import asyncio
 import random
 import time
-import os
 from typing import List, Dict, Tuple
 from pathlib import Path
 import logging
@@ -22,7 +21,6 @@ class HuggingFaceImageGenerator:
     def __init__(self):
         self.api_token = settings.HUGGINGFACE_API_TOKEN
         self.model = "stabilityai/stable-diffusion-3-medium"
-        os.environ["HF_TOKEN"] = self.api_token
     
     async def generate_images(
         self,
