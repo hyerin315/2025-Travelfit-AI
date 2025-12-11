@@ -126,7 +126,7 @@ async def generate_images(request: ImageGenerationRequest):
         GeneratedImage(
             image_id=img["image_id"],
             filename=img["filename"],
-            url=img["url"],
+            base64=img["base64"],
             seed=img["seed"]
         )
         for img in images_data
@@ -220,11 +220,20 @@ async def get_generation_info(generation_id: str):
     생성 정보 조회
     
     Args:
-        generation_id: 생성 ID
+        generation_id: 생성 ID (UUID 형식)
         
     Returns:
         생성 정보 및 메타데이터
     """
+    # UUID 형식 검증
+    import re
+    uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    if not re.match(uuid_pattern, generation_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid generation ID format"
+        )
+    
     generation = session_manager.get_generation(generation_id)
     
     if not generation:

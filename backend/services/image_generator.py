@@ -6,8 +6,8 @@ import asyncio
 import random
 import time
 import requests
+import base64
 from typing import List, Dict, Tuple
-from pathlib import Path
 import logging
 
 from config import settings
@@ -140,19 +140,29 @@ class ImageGenerator:
             response.raise_for_status()
             image_bytes = response.content
             
-            # 파일 저장
+            # 이미지 크기 검증 (최대 10MB)
+            MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+            if len(image_bytes) > MAX_IMAGE_SIZE:
+                logger.error(f"❌ 이미지 {index} 크기 초과: {len(image_bytes)} bytes (최대 {MAX_IMAGE_SIZE} bytes)")
+                raise Exception(f"Image size exceeds maximum allowed size (10MB)")
+            
+            # base64 인코딩 (서버 저장 없이 클라이언트로 직접 전달)
+            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+            
+            # Base64 문자열 길이 검증 (약 15MB = 15,000,000 문자)
+            MAX_BASE64_LENGTH = 15_000_000
+            if len(image_base64) > MAX_BASE64_LENGTH:
+                logger.error(f"❌ Base64 인코딩 크기 초과: {len(image_base64)} characters")
+                raise Exception(f"Base64 encoded image exceeds maximum allowed size")
+            
             filename = f"{generation_id}_{index}.png"
-            filepath = settings.GENERATED_IMAGES_DIR / filename
             
-            with open(filepath, "wb") as f:
-                f.write(image_bytes)
-            
-            logger.info(f"💾 이미지 저장: {filename} ({len(image_bytes)} bytes)")
+            logger.info(f"✅ 이미지 {index} base64 인코딩 완료 (seed={seed}, {len(image_bytes)} bytes)")
             
             return {
                 "image_id": f"{generation_id}_{index}",
                 "filename": filename,
-                "url": f"/api/images/{filename}",
+                "base64": image_base64,
                 "seed": seed
             }
         

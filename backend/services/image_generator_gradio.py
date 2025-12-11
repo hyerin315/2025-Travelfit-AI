@@ -4,7 +4,7 @@ Gradio Client를 사용한 Stable Diffusion 이미지 생성 (Hugging Face Space
 """
 import asyncio
 import time
-import shutil
+import base64
 from typing import List, Dict, Tuple
 from pathlib import Path
 import logging
@@ -177,20 +177,38 @@ class GradioImageGenerator:
                     actual_seed = result[1]  # 실제 사용된 시드 (int)
                     
                     if temp_image_path and isinstance(temp_image_path, str):
-                        # 영구 저장 경로로 복사
-                        filename = f"{generation_id}_{idx}.png"
-                        filepath = settings.GENERATED_IMAGES_DIR / filename
-                        
-                        shutil.copy(temp_image_path, filepath)
-                        
-                        logger.info(f"💾 이미지 저장: {filename} (seed={actual_seed})")
-                        
-                        images_data.append({
-                            "image_id": f"{generation_id}_{idx}",
-                            "filename": filename,
-                            "url": f"/api/images/{filename}",
-                            "seed": actual_seed
-                        })
+                        # 이미지를 base64로 인코딩 (서버 저장 없이 클라이언트로 직접 전달)
+                        try:
+                            with open(temp_image_path, "rb") as img_file:
+                                image_bytes = img_file.read()
+                            
+                            # 이미지 크기 검증 (최대 10MB)
+                            MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+                            if len(image_bytes) > MAX_IMAGE_SIZE:
+                                logger.error(f"❌ 이미지 {idx+1} 크기 초과: {len(image_bytes)} bytes (최대 {MAX_IMAGE_SIZE} bytes)")
+                                raise Exception(f"Image size exceeds maximum allowed size (10MB)")
+                            
+                            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                            
+                            # Base64 문자열 길이 검증 (약 15MB = 15,000,000 문자)
+                            MAX_BASE64_LENGTH = 15_000_000
+                            if len(image_base64) > MAX_BASE64_LENGTH:
+                                logger.error(f"❌ Base64 인코딩 크기 초과: {len(image_base64)} characters")
+                                raise Exception(f"Base64 encoded image exceeds maximum allowed size")
+                            
+                            filename = f"{generation_id}_{idx}.png"
+                            
+                            logger.info(f"✅ 이미지 {idx+1} base64 인코딩 완료 (seed={actual_seed}, {len(image_bytes)} bytes)")
+                            
+                            images_data.append({
+                                "image_id": f"{generation_id}_{idx}",
+                                "filename": filename,
+                                "base64": image_base64,  # base64 인코딩된 이미지 데이터
+                                "seed": actual_seed
+                            })
+                        except Exception as e:
+                            logger.error(f"❌ 이미지 {idx+1} base64 인코딩 실패: {str(e)}")
+                            raise
                     else:
                         logger.warning(f"⚠️ 이미지 {idx+1} 경로가 유효하지 않음: {temp_image_path}")
             
