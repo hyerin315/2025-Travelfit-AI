@@ -37,16 +37,16 @@ const defaultTheme = TRAVEL_THEME_OPTIONS[0];
 const initialSettings: GenerationSettings = {
   location: '',
   spot: '',
-  targetAudience: 'honeymooners',
-  travelTheme: 'romantic_getaway',
-  brandStyle: 'warm_life_snap',
-  persona: defaultAudience?.persona ?? '2_couple',
+  targetAudience: '',
+  travelTheme: '',
+  brandStyle: '',
+  persona: '',
   action: 'front',
-  actionDetail: defaultTheme?.prompt ?? '',
-  expression: defaultAudience?.expression ?? '',
-  timeOfDay: defaultTheme?.timeOfDay ?? 'auto',
-  layout: 'center',
-  ratio: '1:1',
+  actionDetail: '',
+  expression: '',
+  timeOfDay: 'auto',
+  layout: '',
+  ratio: '',
 };
 
 export const useAppStore = create<AppState>((set) => ({
