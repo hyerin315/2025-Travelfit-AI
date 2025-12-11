@@ -47,22 +47,23 @@ export default function HomePage() {
     >
       {/* Hero Section */}
       <section className="relative">
-        <div className="max-w-6xl mx-auto px-6 pt-28 pb-16 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">
+        <div className="max-w-6xl mx-auto px-6 pt-40 pb-16 text-center">
+          <h1 className="text-h1 text-gray-900">
             Ad Image Generator
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#19A8FF] via-[#2F83F7] to-[#3856EB]">
+            <span className="text-transparent bg-clip-text bg-gradient-cta">
               for Travel Marketers
             </span>
           </h1>
-          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto mt-6">
+          <p className="text-body-xl text-gray-800 max-w-[810px] mx-auto mt-5">
             Create high-quality, on-brand travel visuals in just one minute—no complex setup required.
-            Boost your campaign performance by up to 10× with AI-powered creative support.
+            <br />
+            Supercharge your ad performance by up to 10x.
           </p>
-          <div className="pt-8">
+          <div className="pt-[50px]">
             <button
               onClick={() => router.push('/generate')}
-              className="inline-flex items-center justify-center gap-3 rounded-full px-10 py-4 text-base font-semibold text-white bg-gradient-to-r from-[#1FB4FF] via-[#2487FF] to-[#3556F6] shadow-[0_12px_30px_rgba(46,122,255,0.35)] hover:shadow-[0_16px_40px_rgba(46,122,255,0.45)] transition-all duration-300"
+              className="inline-flex items-center justify-center gap-3 rounded-full px-10 py-4 text-h5 text-gray-100 bg-gradient-cta shadow-[0_12px_30px_rgba(46,122,255,0.35)] hover:shadow-[0_16px_40px_rgba(46,122,255,0.45)] transition-all duration-300"
             >
               Get Started Without Login
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,42 +75,95 @@ export default function HomePage() {
       </section>
 
       {/* Image Gallery */}
-      <section className="py-12">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {Array.from({ length: 12 }).map((_, idx) => (
+      <section className="py-12 overflow-hidden">
+        <div className="relative">
+          {/* 첫 번째 행 - 왼쪽으로 흐름 */}
+          <div className="flex gap-6 mb-6 animate-scroll-left">
+            {[
+              { id: 1, title: 'Paris, France', seed: 'paris-eiffel', aspect: 'aspect-[420/240]', width: 'w-[420px]', imgSize: '420/240' },
+              { id: 2, title: 'Canola Fields, Jeju', seed: 'jeju-canola', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 3, title: 'Hanok Village, Seoul', seed: 'seoul-hanok', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 4, title: 'Blue Trail, Alps', seed: 'alps-hiking', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 1, title: 'Paris, France', seed: 'paris-eiffel', aspect: 'aspect-[420/240]', width: 'w-[420px]', imgSize: '420/240' },
+              { id: 2, title: 'Canola Fields, Jeju', seed: 'jeju-canola', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 3, title: 'Hanok Village, Seoul', seed: 'seoul-hanok', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 4, title: 'Blue Trail, Alps', seed: 'alps-hiking', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+            ].map((item, idx) => (
               <div
-                key={idx}
-                className="group relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
+                key={`row1-${idx}`}
+                className={`group relative ${item.aspect} ${item.width} flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300`}
               >
-                <div
-                  className={`absolute inset-0 ${
-                    idx % 4 === 0
-                      ? 'bg-gradient-to-br from-amber-300 via-orange-300 to-red-400'
-                      : idx % 4 === 1
-                      ? 'bg-gradient-to-br from-blue-300 via-cyan-300 to-teal-400'
-                      : idx % 4 === 2
-                      ? 'bg-gradient-to-br from-purple-300 via-pink-300 to-rose-400'
-                      : 'bg-gradient-to-br from-emerald-300 via-lime-300 to-yellow-300'
-                  }`}
+                <img
+                  src={`https://picsum.photos/seed/${item.seed}/${item.imgSize}`}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-white/10" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
-                  <p className="text-sm font-semibold drop-shadow">
-                    {[
-                      'Paris, France',
-                      'Canola Fields, Jeju',
-                      'Hanok Village, Seoul',
-                      'Blue Trail, Alps',
-                      'Brandenburg Gate',
-                      'Taipei Night Market',
-                      'Resort Pool, Phuket',
-                      'Kyoto Gardens',
-                      'NYC Skyline',
-                      'Angkor Wat',
-                      'Sunrise Yoga',
-                      'Lisbon Dining',
-                    ][idx]}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-sm font-semibold text-white drop-shadow">
+                    {item.title}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 두 번째 행 - 오른쪽으로 흐름 */}
+          <div className="flex gap-6 mb-6 animate-scroll-right">
+            {[
+              { id: 5, title: 'Brandenburg Gate', seed: 'berlin-gate', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 6, title: 'Taipei Night Market', seed: 'taipei-night', aspect: 'aspect-[420/240]', width: 'w-[420px]', imgSize: '420/240' },
+              { id: 7, title: 'Resort Pool, Phuket', seed: 'phuket-resort', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 8, title: 'Kyoto Gardens', seed: 'kyoto-temple', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 9, title: 'NYC Skyline', seed: 'nyc-skyline', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 5, title: 'Brandenburg Gate', seed: 'berlin-gate', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 6, title: 'Taipei Night Market', seed: 'taipei-night', aspect: 'aspect-[420/240]', width: 'w-[420px]', imgSize: '420/240' },
+              { id: 7, title: 'Resort Pool, Phuket', seed: 'phuket-resort', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 8, title: 'Kyoto Gardens', seed: 'kyoto-temple', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 9, title: 'NYC Skyline', seed: 'nyc-skyline', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+            ].map((item, idx) => (
+              <div
+                key={`row2-${idx}`}
+                className={`group relative ${item.aspect} ${item.width} flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300`}
+              >
+                <img
+                  src={`https://picsum.photos/seed/${item.seed}/${item.imgSize}`}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-sm font-semibold text-white drop-shadow">
+                    {item.title}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 세 번째 행 - 왼쪽으로 흐름 */}
+          <div className="flex gap-6 animate-scroll-left">
+            {[
+              { id: 10, title: 'Angkor Wat', seed: 'angkor-wat', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 11, title: 'Sunrise Yoga', seed: 'yoga-sunrise', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 12, title: 'Lisbon Dining', seed: 'lisbon-dining', aspect: 'aspect-[420/240]', width: 'w-[420px]', imgSize: '420/240' },
+              { id: 10, title: 'Angkor Wat', seed: 'angkor-wat', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 11, title: 'Sunrise Yoga', seed: 'yoga-sunrise', aspect: 'aspect-[320/240]', width: 'w-[320px]', imgSize: '320/240' },
+              { id: 12, title: 'Lisbon Dining', seed: 'lisbon-dining', aspect: 'aspect-[420/240]', width: 'w-[420px]', imgSize: '420/240' },
+            ].map((item, idx) => (
+              <div
+                key={`row3-${idx}`}
+                className={`group relative ${item.aspect} ${item.width} flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300`}
+              >
+                <img
+                  src={`https://picsum.photos/seed/${item.seed}/${item.imgSize}`}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-sm font-semibold text-white drop-shadow">
+                    {item.title}
                   </p>
                 </div>
               </div>
@@ -121,19 +175,21 @@ export default function HomePage() {
       {/* Waitlist Section */}
       <section className="py-16">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-6">
-            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 6a9 9 0 100 18 9 9 0 000-18z" />
-            </svg>
+          <div className="inline-flex items-center justify-center mb-[10px]">
+            <img
+              src="/assets/icons/alarm.svg"
+              alt="Notification"
+              className="w-[40px] h-[42px]"
+            />
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+          <h2 className="text-h2 text-gray-900">
             Travel-Fit AI is about to get even smarter.
           </h2>
-          <p className="text-gray-600 mt-4">
+          <p className="text-body-l text-gray-800 mt-4">
             Sign up to get early access to our beta launch and exclusive perks for marketers.
           </p>
 
-          <form onSubmit={handleWaitlistSubmit} className="mt-10 space-y-4">
+          <form onSubmit={handleWaitlistSubmit} className="mt-[40px]">
             <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
               <input
                 type="email"
@@ -141,17 +197,17 @@ export default function HomePage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 required
-                className="w-full px-5 py-4 text-base border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 transition-all"
+                className="w-full px-5 py-4 text-body-m text-gray-700 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 transition-all placeholder:text-gray-700"
               />
 
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="w-full px-5 py-4 text-left text-base border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 bg-white flex items-center justify-between text-gray-700"
+                  className="w-full px-5 py-4 text-left text-body-m text-gray-900 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 bg-white flex items-center justify-between"
                 >
                   <span>{jobTitle ? JOB_OPTIONS.find((job) => job.value === jobTitle)?.label : 'Job Role'}</span>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -168,7 +224,7 @@ export default function HomePage() {
                             setJobTitle(option.value);
                             setIsDropdownOpen(false);
                           }}
-                          className={`w-full px-5 py-3 text-left text-sm transition-colors ${
+                          className={`w-full px-5 py-3 text-left text-body-m text-gray-900 transition-colors ${
                             jobTitle === option.value ? 'bg-blue-50 text-blue-600 font-semibold' : 'hover:bg-gray-50'
                           }`}
                         >
@@ -183,7 +239,7 @@ export default function HomePage() {
 
             <button
               type="submit"
-              className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-base font-semibold text-white bg-[#176BFF] hover:bg-[#0E5BDE] transition-all shadow-lg"
+              className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-body-m-bold text-gray-100 bg-[#007ED3] hover:bg-[#006BB3] transition-all shadow-lg mt-10"
             >
               Get Updates
             </button>
@@ -193,15 +249,15 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-white/60">
-        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col items-center justify-center gap-4">
+        <div className="max-w-6xl mx-auto px-6 pt-[100px] pb-[40px] flex flex-col items-center justify-center gap-5">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-6 py-3 rounded-xl bg-white/80 backdrop-blur text-sm font-semibold text-gray-700 hover:bg-white transition-all"
+            className="px-6 py-3 rounded-xl bg-white/80 backdrop-blur text-body-m-bold text-gray-800 hover:bg-white transition-all"
           >
             Contact Us
           </button>
-          <div className="text-sm text-gray-500">
-            © 2025 Travel-Fit AI. All rights reserved. | Powered by Readdy
+          <div className="text-body-s text-gray-800">
+            © 2025 Travel-Fit AI. All rights reserved. | <span className="text-primary">Powered by Readdy</span>
           </div>
         </div>
       </footer>
@@ -213,63 +269,75 @@ export default function HomePage() {
           onClick={() => setIsModalOpen(false)}
         >
           <div 
-            className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 relative animate-in zoom-in-95 duration-200"
+            className="bg-white rounded-3xl shadow-2xl w-[896px] h-[600px] flex overflow-hidden relative animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors p-1"
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors p-1 z-10"
             >
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
 
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">
-              Contact Us
-            </h2>
+            {/* Left Side - Form */}
+            <div className="flex-1 p-8 flex flex-col">
+              <h2 className="text-h3 text-gray-900 mb-8">
+                Contact Us
+              </h2>
 
-            <form onSubmit={handleInquirySubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  value={inquiryEmail}
-                  onChange={(e) => setInquiryEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all"
-                  placeholder="your@email.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Enter your message
-                </label>
-                <textarea
-                  value={inquiryMessage}
-                  onChange={(e) => setInquiryMessage(e.target.value)}
-                  required
-                  rows={6}
-                  maxLength={500}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all resize-none"
-                  placeholder="Tell us how we can help you."
-                />
-                <div className="text-right text-sm text-gray-500 mt-2">
-                  {inquiryMessage.length}/500
+              <form onSubmit={handleInquirySubmit} className="space-y-6 flex-1 flex flex-col">
+                <div>
+                  <label className="block text-body-m text-gray-700 mb-2">
+                    Email address
+                  </label>
+                  <input
+                    type="email"
+                    value={inquiryEmail}
+                    onChange={(e) => setInquiryEmail(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all text-body-m"
+                    placeholder="your@email.com"
+                  />
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl"
-              >
-                Send
-              </button>
-            </form>
+                <div className="flex-1 flex flex-col">
+                  <label className="block text-body-m text-gray-700 mb-2">
+                    Enter your message
+                  </label>
+                  <textarea
+                    value={inquiryMessage}
+                    onChange={(e) => setInquiryMessage(e.target.value)}
+                    required
+                    rows={6}
+                    maxLength={500}
+                    className="w-full flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all resize-none text-body-m"
+                    placeholder="Tell us how we can help you."
+                  />
+                  <div className="text-right text-sm text-gray-500 mt-2">
+                    {inquiryMessage.length}/500
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-[#006BB3] text-body-m-bold text-gray-100 py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl"
+                >
+                  Send
+                </button>
+              </form>
+            </div>
+
+            {/* Right Side - Image */}
+            <div className="w-[400px] h-full flex-shrink-0 hidden md:block">
+              <img
+                src="https://picsum.photos/seed/business-meeting/400/600"
+                alt="Business meeting"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       )}

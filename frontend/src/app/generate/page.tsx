@@ -24,6 +24,10 @@ import {
   loadFieldPreset,
   clearFieldPreset,
 } from '@/utils/presetStorage';
+import { LayoutCenterIcon } from '@/components/icons/LayoutCenterIcon';
+import { LayoutSubjectLeftIcon } from '@/components/icons/LayoutSubjectLeftIcon';
+import { LayoutSubjectRightIcon } from '@/components/icons/LayoutSubjectRightIcon';
+import { LayoutBottomSpaceIcon } from '@/components/icons/LayoutBottomSpaceIcon';
 
 const LOADING_MESSAGES = [
   { emoji: '✨', text: 'Polishing tone & lighting for your brand...' },
@@ -73,6 +77,7 @@ export default function GeneratePage() {
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [presetStatus, setPresetStatus] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [tooltipField, setTooltipField] = useState<string | null>(null);
   const [savedFields, setSavedFields] = useState<Record<string, boolean>>({
     targetAudience: false,
     travelTheme: false,
@@ -271,16 +276,16 @@ export default function GeneratePage() {
     updateSettings({
       location: '',
       spot: '',
-      targetAudience: 'honeymooners',
-      travelTheme: 'romantic_getaway',
-      brandStyle: 'warm_life_snap',
-      persona: '2_couple',
+      targetAudience: '',
+      travelTheme: '',
+      brandStyle: '',
+      persona: '',
       action: 'front',
       actionDetail: '',
       expression: '',
       timeOfDay: 'auto',
-      layout: 'center',
-      ratio: '1:1',
+      layout: '',
+      ratio: '',
     });
     setGenerationResult(null);
     setStatus('idle');
@@ -295,6 +300,31 @@ export default function GeneratePage() {
   const handleGenerate = async () => {
     if (!settings.location.trim()) {
       alert('Please enter a destination.');
+      return;
+    }
+
+    if (!settings.targetAudience) {
+      alert('Please select a target audience.');
+      return;
+    }
+
+    if (!settings.travelTheme) {
+      alert('Please select a travel theme.');
+      return;
+    }
+
+    if (!settings.brandStyle) {
+      alert('Please select a brand style.');
+      return;
+    }
+
+    if (!settings.layout) {
+      alert('Please select a copy layout.');
+      return;
+    }
+
+    if (!settings.ratio) {
+      alert('Please select an image aspect ratio.');
       return;
     }
 
@@ -338,10 +368,21 @@ export default function GeneratePage() {
   };
 
   const handleDownload = (image: GeneratedImage) => {
+    // base64 데이터를 Blob으로 변환하여 다운로드
+    const byteCharacters = atob(image.base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+    
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = apiClient.getImageUrl(image.filename);
+    link.href = url;
     link.download = image.filename;
     link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleReset = () => {
@@ -350,31 +391,38 @@ export default function GeneratePage() {
     setError(null);
   };
 
-  const renderStepGuide = () => (
-    <div className="space-y-3 max-w-sm mx-auto">
-      {STEP_ITEMS.map((step, idx) => {
-        const isDone = stepCompletion[idx];
-        return (
-          <div key={step} className="flex items-center gap-3">
-            <span
-              className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                isDone ? 'border-[#3CA3F7] bg-[#3CA3F7]' : 'border-gray-200 bg-transparent'
-              }`}
-            >
-              {isDone ? (
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-              )}
-            </span>
-            <span className={`text-sm ${isDone ? 'text-[#1A2C54] font-semibold' : 'text-gray-400'}`}>{step}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
+  const renderStepGuide = () => {
+    // 가장 긴 텍스트를 기준으로 박스 너비 설정
+    const maxWidth = 'w-[200px]'; // "Brand Style / Voice" 또는 "Image Aspect Ratio" 기준
+    
+    return (
+      <div className={`space-y-3 mx-auto flex flex-col ${maxWidth}`}>
+        {STEP_ITEMS.map((step, idx) => {
+          const isDone = stepCompletion[idx];
+          return (
+            <div key={step} className="flex items-center gap-3">
+              <span
+                className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                  isDone ? 'border-primary bg-primary' : 'border-gray-500 bg-gray-500'
+                }`}
+              >
+                {isDone ? (
+                  <svg className="w-3 h-3 text-gray-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3 text-gray-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </span>
+              <span className={`text-body-m ${isDone ? 'text-primary' : 'text-gray-800'}`}>{step}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   const renderLoadingState = () => {
     const activeDot = loadingMessageIndex % 4;
@@ -412,7 +460,7 @@ export default function GeneratePage() {
             >
               <div className="rounded-[20px] bg-[#EEF3FF] aspect-[4/3] overflow-hidden flex items-center justify-center">
                 <img
-                  src={apiClient.getImageUrl(image.filename)}
+                  src={`data:image/png;base64,${image.base64}`}
                   alt={`Generated ${idx + 1}`}
                   className="w-full h-full object-cover"
                 />
@@ -446,17 +494,17 @@ export default function GeneratePage() {
 
   const renderErrorState = () => (
     <div className="text-center space-y-4">
-      <div className="text-5xl">🙈</div>
-      <p className="text-gray-900 font-semibold">Failed to generate images</p>
-      <p className="text-sm text-gray-600 max-w-sm mx-auto">
-        {error ?? 'The AI service may be busy. Please adjust your prompt or try again shortly.'}
+      <div className="flex justify-center">
+        <img
+          src="/assets/icons/generation-failed-alarm.svg"
+          alt="Generation failed"
+          className="w-[60px] h-[60px]"
+        />
+      </div>
+      <p className="text-body-l-bold text-gray-900">Generation failed.</p>
+      <p className="text-body-m text-gray-800">
+        Try again with a different style or prompt.
       </p>
-      <button
-        onClick={handleReset}
-        className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] text-white text-sm font-semibold shadow-lg hover:opacity-95 transition"
-      >
-        Try Again
-      </button>
     </div>
   );
 
@@ -468,8 +516,7 @@ export default function GeneratePage() {
     return (
       <div className="text-center space-y-6">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">Fill out the following settings to create the image.</h3>
-          <p className="text-sm text-gray-500 mt-2">Need inspiration? Start with “Paris” and “Romantic Getaway”.</p>
+          <h3 className="text-h4 text-gray-800">Fill out the following settings to create the image.</h3>
         </div>
         {renderStepGuide()}
       </div>
@@ -478,19 +525,27 @@ export default function GeneratePage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className="min-h-screen flex flex-col pb-[100px]"
       style={{
         background: 'linear-gradient(135deg, #FFFCF5 0%, #F2F9FF 41%, #EEF3FD 62%, #FFEDF8 100%)',
       }}
     >
-      <div className="px-6 py-4 border-b border-white/40">
-        <div className="w-full flex items-center justify-between px-6">
-          <div className="flex-1" style={{ maxWidth: '360px', paddingLeft: '20px' }}>
-            <h1 className="text-xl font-extrabold tracking-tight text-[#1A2C54]">Travel-Fit AI</h1>
-          </div>
+      <div className="px-5 py-[22px] border-b border-white/40">
+        <div className="w-full flex items-center justify-between">
           <button
             onClick={() => router.push('/')}
-            className="text-sm font-semibold text-[#6C7995] hover:text-[#1A2C54] transition flex items-center gap-1"
+            className="flex-1 cursor-pointer"
+            style={{ maxWidth: '360px', paddingLeft: '20px', textAlign: 'left' }}
+          >
+            <img 
+              src="/assets/logo/travel-fit-ai.svg" 
+              alt="Travel-Fit AI" 
+              style={{ height: '20px', width: 'auto', padding: 0 }}
+            />
+          </button>
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm font-semibold text-[#6C7995] hover:text-[#1A2C54] transition flex items-center gap-1 pr-5"
           >
             <span aria-hidden="true">←</span> Back to Home
           </button>
@@ -499,32 +554,62 @@ export default function GeneratePage() {
 
       <div className="flex-1 flex">
         <div
-          className="w-full max-w-[360px] p-6 overflow-y-auto ml-[20px] mr-8 my-6 rounded-[28px]"
+          className="w-full max-w-[360px] px-6 py-5 overflow-y-auto m-5 rounded-[28px] border border-white"
           style={{
-            background: 'linear-gradient(150deg, rgba(255,248,237,0.88) 0%, rgba(244,253,255,0.85) 55%, rgba(255,236,247,0.9) 100%)',
-            backdropFilter: 'blur(28px)',
-            border: '1px solid rgba(255,255,255,0.7)',
-            boxShadow: '0 25px 80px rgba(72,93,138,0.18), inset 0 1px 0 rgba(255,255,255,0.65)',
+            boxShadow: '0 25px 80px rgba(72,93,138,0.18)',
           }}
         >
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Customization</h2>
+          <h2 className="text-h5 text-gray-900 mb-5">Customization</h2>
           <div className="space-y-6">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">
+              <label className="block text-body-m-bold text-gray-800 mb-[14px]">
                 Destination
               </label>
-              <input
-                list="top-destinations"
-                value={settings.location}
-                onChange={(e) => handleDestinationChange(e.target.value)}
-                placeholder="Type or choose a city..."
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-              />
-              <datalist id="top-destinations">
-                {TOP_DESTINATIONS.map((city) => (
-                  <option key={city} value={city} />
-                ))}
-              </datalist>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={settings.location}
+                  onChange={(e) => handleDestinationChange(e.target.value)}
+                  onFocus={() => setOpenDropdown('destination')}
+                  placeholder="Auto suggest top cities"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-body-m text-gray-900 placeholder:text-gray-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setOpenDropdown(openDropdown === 'destination' ? null : 'destination')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                >
+                  <svg className="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {openDropdown === 'destination' && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden max-h-60 overflow-y-auto">
+                      {TOP_DESTINATIONS.filter(city => 
+                        city.toLowerCase().includes(settings.location.toLowerCase())
+                      ).map((city) => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => {
+                            handleDestinationChange(city);
+                            setOpenDropdown(null);
+                          }}
+                          className={`w-full px-4 py-3 text-left text-body-m transition-colors ${
+                            settings.location === city
+                              ? 'bg-blue-50 text-blue-600 font-semibold'
+                              : 'hover:bg-gray-50 text-gray-900'
+                          }`}
+                        >
+                          {city}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
               {availableSpots.length > 0 && (
                 <div className="mt-3">
                   <p className="text-xs font-semibold text-gray-600 mb-1">Suggested Spots</p>
@@ -536,7 +621,7 @@ export default function GeneratePage() {
                         onClick={() => handleSpotSelect(spot)}
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                           settings.spot === spot
-                            ? 'bg-blue-600 text-white border-blue-600'
+                            ? 'bg-primary text-white border-primary'
                             : 'border-gray-200 text-gray-600 hover:border-blue-300'
                         }`}
                       >
@@ -549,17 +634,17 @@ export default function GeneratePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">
+              <label className="block text-body-m-bold text-gray-800 mb-[14px]">
                 Target Audience
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setOpenDropdown(openDropdown === 'audience' ? null : 'audience')}
-                  className="w-full px-4 py-3 text-left text-sm border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 bg-white flex items-center justify-between text-gray-700"
+                  className="w-full px-4 py-3 text-left text-body-m text-gray-900 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 bg-white flex items-center justify-between"
                 >
                   <span>{selectedAudience?.label || 'Select target audience'}</span>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -588,29 +673,40 @@ export default function GeneratePage() {
                   </>
                 )}
               </div>
-              <label className="flex items-center gap-2 mt-2 cursor-pointer">
+              <label 
+                className={`relative flex items-center gap-2 mt-2 ${settings.targetAudience ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                onMouseEnter={() => !settings.targetAudience && setTooltipField('targetAudience')}
+                onMouseLeave={() => setTooltipField(null)}
+              >
                 <input
                   type="checkbox"
                   checked={savedFields.targetAudience}
                   onChange={() => handleFieldPresetToggle('targetAudience', settings.targetAudience)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={!settings.targetAudience}
+                  className="w-4 h-4 rounded border-gray-600 accent-primary focus:ring-primary disabled:cursor-not-allowed"
                 />
-                <span className="text-xs text-gray-600">Save this selection as Brand Preset</span>
+                <span className="text-body-s text-gray-800">Save this selection as Brand Preset</span>
+                {tooltipField === 'targetAudience' && !settings.targetAudience && (
+                  <div className="absolute left-[24px] top-full mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-50">
+                    Selection incomplete. Cannot save.
+                    <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  </div>
+                )}
               </label>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">
+              <label className="block text-body-m-bold text-gray-800 mb-[14px]">
                 Travel Theme
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setOpenDropdown(openDropdown === 'theme' ? null : 'theme')}
-                  className="w-full px-4 py-3 text-left text-sm border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 bg-white flex items-center justify-between text-gray-700"
+                  className="w-full px-4 py-3 text-left text-body-m text-gray-900 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 bg-white flex items-center justify-between"
                 >
                   <span>{selectedTheme?.label || 'Select travel theme'}</span>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -639,29 +735,51 @@ export default function GeneratePage() {
                   </>
                 )}
               </div>
-              <label className="flex items-center gap-2 mt-2 cursor-pointer">
+              <label 
+                className={`relative flex items-center gap-2 mt-2 ${settings.travelTheme ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                onMouseEnter={() => !settings.travelTheme && setTooltipField('travelTheme')}
+                onMouseLeave={() => setTooltipField(null)}
+              >
                 <input
                   type="checkbox"
                   checked={savedFields.travelTheme}
                   onChange={() => handleFieldPresetToggle('travelTheme', settings.travelTheme)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={!settings.travelTheme}
+                  className="w-4 h-4 rounded border-gray-600 accent-primary focus:ring-primary disabled:cursor-not-allowed"
                 />
-                <span className="text-xs text-gray-600">Save this selection as Brand Preset</span>
+                <span className="text-body-s text-gray-800">Save this selection as Brand Preset</span>
+                {tooltipField === 'travelTheme' && !settings.travelTheme && (
+                  <div className="absolute left-[24px] top-full mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-50">
+                    Selection incomplete. Cannot save.
+                    <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  </div>
+                )}
               </label>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">
+              <label className="block text-body-m-bold text-gray-800 mb-[14px]">
                 Brand Style / Voice
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setOpenDropdown(openDropdown === 'brandStyle' ? null : 'brandStyle')}
-                  className="w-full px-4 py-3 text-left text-sm border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 bg-white flex items-center justify-between text-gray-700"
+                  className="w-full px-4 py-3 text-left text-body-m text-gray-900 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 bg-white flex items-center justify-between"
                 >
-                  <span>{selectedBrandStyle?.label || 'Select brand style'}</span>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-3">
+                    {selectedBrandStyle && (
+                      <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                        <img
+                          src={selectedBrandStyle.imagePath}
+                          alt={selectedBrandStyle.label}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <span>{selectedBrandStyle?.label || 'Select brand style'}</span>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -677,32 +795,50 @@ export default function GeneratePage() {
                             handleBrandStyleChange(option.value);
                             setOpenDropdown(null);
                           }}
-                          className={`w-full px-4 py-3 text-left text-sm transition-colors ${
+                          className={`w-full px-4 py-3 text-left text-sm transition-colors flex items-center gap-3 ${
                             settings.brandStyle === option.value
                               ? 'bg-blue-50 text-blue-600 font-semibold'
-                              : 'hover:bg-gray-50'
+                              : 'hover:bg-gray-50 text-gray-700'
                           }`}
                         >
-                          {option.label}
+                          <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                            <img
+                              src={option.imagePath}
+                              alt={option.label}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <span>{option.label}</span>
                         </button>
                       ))}
                     </div>
                   </>
                 )}
               </div>
-              <label className="flex items-center gap-2 mt-2 cursor-pointer">
+              <label 
+                className={`relative flex items-center gap-2 mt-2 ${settings.brandStyle ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                onMouseEnter={() => !settings.brandStyle && setTooltipField('brandStyle')}
+                onMouseLeave={() => setTooltipField(null)}
+              >
                 <input
                   type="checkbox"
                   checked={savedFields.brandStyle}
                   onChange={() => handleFieldPresetToggle('brandStyle', settings.brandStyle)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={!settings.brandStyle}
+                  className="w-4 h-4 rounded border-gray-600 accent-primary focus:ring-primary disabled:cursor-not-allowed"
                 />
-                <span className="text-xs text-gray-600">Save this selection as Brand Preset</span>
+                <span className="text-body-s text-gray-800">Save this selection as Brand Preset</span>
+                {tooltipField === 'brandStyle' && !settings.brandStyle && (
+                  <div className="absolute left-[24px] top-full mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-50">
+                    Selection incomplete. Cannot save.
+                    <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  </div>
+                )}
               </label>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">
+              <label className="block text-body-m-bold text-gray-800 mb-[14px]">
                 Copy Layout
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -710,42 +846,13 @@ export default function GeneratePage() {
                   const isSelected = settings.layout === option.value;
                   const LayoutIcon = () => {
                     if (option.value === 'center') {
-                      return (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="8" strokeWidth="2" />
-                          <circle cx="12" cy="12" r="2" fill="currentColor" />
-                          <line x1="12" y1="4" x2="12" y2="6" strokeWidth="2" />
-                          <line x1="12" y1="18" x2="12" y2="20" strokeWidth="2" />
-                          <line x1="4" y1="12" x2="6" y2="12" strokeWidth="2" />
-                          <line x1="18" y1="12" x2="20" y2="12" strokeWidth="2" />
-                        </svg>
-                      );
+                      return <LayoutCenterIcon className="w-7 h-7" />;
                     } else if (option.value === 'left') {
-                      return (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <line x1="4" y1="10" x2="12" y2="10" strokeWidth="2" strokeLinecap="round" />
-                          <line x1="4" y1="12" x2="10" y2="12" strokeWidth="2" strokeLinecap="round" />
-                          <line x1="4" y1="14" x2="8" y2="14" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                      );
+                      return <LayoutSubjectLeftIcon className="w-7 h-7" />;
                     } else if (option.value === 'right') {
-                      return (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <line x1="20" y1="10" x2="12" y2="10" strokeWidth="2" strokeLinecap="round" />
-                          <line x1="20" y1="12" x2="14" y2="12" strokeWidth="2" strokeLinecap="round" />
-                          <line x1="20" y1="14" x2="16" y2="14" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                      );
+                      return <LayoutSubjectRightIcon className="w-7 h-7" />;
                     } else {
-                      return (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <line x1="12" y1="6" x2="8" y2="10" strokeWidth="2" strokeLinecap="round" />
-                          <line x1="12" y1="6" x2="16" y2="10" strokeWidth="2" strokeLinecap="round" />
-                          <line x1="12" y1="18" x2="8" y2="14" strokeWidth="2" strokeLinecap="round" />
-                          <line x1="12" y1="18" x2="16" y2="14" strokeWidth="2" strokeLinecap="round" />
-                          <line x1="8" y1="12" x2="16" y2="12" strokeWidth="2" />
-                        </svg>
-                      );
+                      return <LayoutBottomSpaceIcon className="w-7 h-7" />;
                     }
                   };
                   
@@ -757,39 +864,50 @@ export default function GeneratePage() {
                       className={`px-4 py-3 rounded-xl border text-left transition flex items-start justify-between gap-2 ${
                         isSelected
                           ? 'border-blue-500 bg-blue-600 text-white'
-                          : 'border-gray-200 hover:border-blue-200 text-gray-700 bg-white'
+                          : 'border-gray-200 hover:border-blue-200 text-gray-900 bg-white'
                       }`}
                     >
                           <div className="flex-1">
-                            <p className="text-sm font-semibold">{option.label}</p>
+                            <p className={`text-body-m ${isSelected ? 'text-white' : 'text-gray-900'}`}>{option.label}</p>
                           </div>
-                      <div className={`mt-0.5 flex-shrink-0 ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                      <div className={`mt-0.5 flex-shrink-0 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                         <LayoutIcon />
                       </div>
                     </button>
                   );
                 })}
               </div>
-              <label className="flex items-center gap-2 mt-2 cursor-pointer">
+              <label 
+                className={`relative flex items-center gap-2 mt-2 ${settings.layout ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                onMouseEnter={() => !settings.layout && setTooltipField('layout')}
+                onMouseLeave={() => setTooltipField(null)}
+              >
                 <input
                   type="checkbox"
                   checked={savedFields.layout}
                   onChange={() => handleFieldPresetToggle('layout', settings.layout)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={!settings.layout}
+                  className="w-4 h-4 rounded border-gray-600 accent-primary focus:ring-primary disabled:cursor-not-allowed"
                 />
-                <span className="text-xs text-gray-600">Save this selection as Brand Preset</span>
+                <span className="text-body-s text-gray-800">Save this selection as Brand Preset</span>
+                {tooltipField === 'layout' && !settings.layout && (
+                  <div className="absolute left-[24px] top-full mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-50">
+                    Selection incomplete. Cannot save.
+                    <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  </div>
+                )}
               </label>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">
+              <label className="block text-body-m-bold text-gray-800 mb-[14px]">
                 Image Aspect Ratio
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {RATIO_OPTIONS.map((option) => {
                   const isSelected = settings.ratio === option.value;
                   const RatioIcon = () => {
-                    const bgColor = isSelected ? 'bg-white' : 'bg-gray-200';
+                    const bgColor = isSelected ? 'bg-white' : 'bg-gray-500';
                     const borderColor = isSelected ? 'border-white/30' : 'border-gray-300';
                     
                     if (option.value === '1:1') {
@@ -813,68 +931,59 @@ export default function GeneratePage() {
                       className={`px-4 py-3 rounded-xl border text-left transition flex items-start justify-between gap-2 ${
                         isSelected
                           ? 'border-blue-500 bg-blue-600 text-white'
-                          : 'border-gray-200 hover:border-blue-200 text-gray-700 bg-white'
+                          : 'border-gray-200 hover:border-blue-200 text-gray-900 bg-white'
                       }`}
                     >
                           <div className="flex-1">
-                            <p className="text-sm font-semibold">{option.label}</p>
+                            <p className={`text-body-m ${isSelected ? 'text-white' : 'text-gray-900'}`}>{option.label}</p>
                           </div>
-                      <div className="mt-0.5 flex-shrink-0 flex items-center justify-center">
+                      <div className="mt-0.5 flex-shrink-0">
                         <RatioIcon />
                       </div>
                     </button>
                   );
                 })}
               </div>
-              <label className="flex items-center gap-2 mt-2 cursor-pointer">
+              <label 
+                className={`relative flex items-center gap-2 mt-2 ${settings.ratio ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                onMouseEnter={() => !settings.ratio && setTooltipField('ratio')}
+                onMouseLeave={() => setTooltipField(null)}
+              >
                 <input
                   type="checkbox"
                   checked={savedFields.ratio}
                   onChange={() => handleFieldPresetToggle('ratio', settings.ratio)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={!settings.ratio}
+                  className="w-4 h-4 rounded border-gray-600 accent-primary focus:ring-primary disabled:cursor-not-allowed"
                 />
-                <span className="text-xs text-gray-600">Save this selection as Brand Preset</span>
+                <span className="text-body-s text-gray-800">Save this selection as Brand Preset</span>
+                {tooltipField === 'ratio' && !settings.ratio && (
+                  <div className="absolute left-[24px] top-full mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-50">
+                    Selection incomplete. Cannot save.
+                    <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  </div>
+                )}
               </label>
-            </div>
-
-            <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-4 space-y-3">
-              <p className="text-xs font-semibold text-gray-600">Brand Preset</p>
-              {presetStatus && <p className="text-[11px] text-blue-600">{presetStatus}</p>}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handlePresetSave}
-                  className="flex-1 px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
-                >
-                  Save preset
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePresetClear}
-                  className="flex-1 px-4 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 hover:border-gray-300 transition"
-                >
-                  Clear
-                </button>
-              </div>
             </div>
 
             <button
               onClick={handleGenerate}
               disabled={!settings.location.trim() || status === 'loading'}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] py-4 text-white text-sm font-semibold shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] h-[60px] text-white text-body-l-bold shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
+              <img src="/assets/icons/star.svg" alt="Star" className="w-[19px] h-[18px]" />
               <span>Generate Creative</span>
             </button>
           </div>
         </div>
 
         <section className="flex-1 pr-8 py-6 overflow-y-auto">
-          <div className="max-w-5xl mx-auto space-y-6">
-            <div className="rounded-[24px] border border-white/70 bg-white/65 shadow-[0_12px_40px_rgba(90,118,171,0.15)] px-8 py-4">
-              <p className="text-sm font-semibold text-gray-700">Your ad creative will appear here.</p>
+          <div className="max-w-5xl mx-auto">
+            <div className="rounded-[24px] border border-white shadow-[0_12px_40px_rgba(90,118,171,0.15)] px-8 py-4">
+              <p className="text-h5 text-gray-900">Your ad creative will appear here.</p>
             </div>
 
-            <div className="rounded-[36px] border border-white/70 bg-white/80 shadow-[0_30px_70px_rgba(90,118,171,0.18)] p-10 min-h-[460px] flex items-center justify-center">
+            <div className="min-h-[460px] flex items-center justify-center mt-[100px]">
               {renderCanvasContent()}
             </div>
           </div>
