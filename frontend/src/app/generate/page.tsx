@@ -469,7 +469,7 @@ export default function GeneratePage() {
     // CASE C: 프리셋이 있으면 CASE C 상태 유지 (프리셋 없이 새 작업)
     if (!hasStoredPreset) {
       // CASE A: 완전히 초기화
-      handlePresetClear();
+    handlePresetClear();
     } else {
       // CASE C: 화면만 초기화하고 프리셋은 스토리지에 유지
       updateSettings({
@@ -654,21 +654,21 @@ export default function GeneratePage() {
     return (
       <div className="w-full flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-6 px-5 py-5">
-          <div className="relative w-24 h-24 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-[#D7E5FF] border-t-[#3CA3F7] animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center text-3xl text-[#3CA3F7]">✦</div>
-          </div>
-          <div>
-            <p className="text-lg font-semibold text-gray-900">Generating...</p>
-            <p className="text-sm text-gray-500 mt-2">{LOADING_MESSAGES[loadingMessageIndex].text}</p>
-          </div>
-          <div className="flex justify-center gap-2">
-            {[0, 1, 2, 3].map((i) => (
-              <span
-                key={i}
-                className={`w-2 h-2 rounded-full ${i <= activeDot ? 'bg-[#3CA3F7]' : 'bg-gray-300'}`}
-              />
-            ))}
+        <div className="relative w-24 h-24 mx-auto">
+          <div className="absolute inset-0 rounded-full border-4 border-[#D7E5FF] border-t-[#3CA3F7] animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center text-3xl text-[#3CA3F7]">✦</div>
+        </div>
+        <div>
+          <p className="text-lg font-semibold text-gray-900">Generating...</p>
+          <p className="text-sm text-gray-500 mt-2">{LOADING_MESSAGES[loadingMessageIndex].text}</p>
+        </div>
+        <div className="flex justify-center gap-2">
+          {[0, 1, 2, 3].map((i) => (
+            <span
+              key={i}
+              className={`w-2 h-2 rounded-full ${i <= activeDot ? 'bg-[#3CA3F7]' : 'bg-gray-300'}`}
+            />
+          ))}
           </div>
         </div>
       </div>
@@ -835,9 +835,21 @@ export default function GeneratePage() {
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
                     <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden max-h-60 overflow-y-auto">
-                      {TOP_DESTINATIONS.filter(city => 
-                        city.toLowerCase().includes(settings.location.toLowerCase())
-                      ).map((city) => (
+                      {TOP_DESTINATIONS.filter(city => {
+                        const searchTerm = settings.location.trim().toLowerCase();
+                        // 입력값이 비어있거나, 입력값이 TOP_DESTINATIONS 중 하나와 정확히 일치하면 전체 목록 표시
+                        // 그 외의 경우는 입력값으로 필터링
+                        if (searchTerm === '') {
+                          return true; // 전체 목록 표시
+                        }
+                        // 입력값이 목록 중 하나와 정확히 일치하는지 확인
+                        const isExactMatch = TOP_DESTINATIONS.some(dest => dest.toLowerCase() === searchTerm);
+                        if (isExactMatch) {
+                          return true; // 전체 목록 표시
+                        }
+                        // 그 외의 경우는 입력값으로 필터링
+                        return city.toLowerCase().includes(searchTerm);
+                      }).map((city) => (
                         <button
                           key={city}
                           type="button"
@@ -1231,14 +1243,14 @@ export default function GeneratePage() {
                 </button>
               </>
             ) : (
-              <button
-                onClick={handleGenerate}
-                disabled={!settings.location.trim() || status === 'loading'}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] h-[60px] text-white text-body-l-bold shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <img src="/assets/icons/star.svg" alt="Star" className="w-[19px] h-[18px]" />
-                <span>Generate Creative</span>
-              </button>
+            <button
+              onClick={handleGenerate}
+              disabled={!settings.location.trim() || status === 'loading'}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] h-[60px] text-white text-body-l-bold shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <img src="/assets/icons/star.svg" alt="Star" className="w-[19px] h-[18px]" />
+              <span>Generate Creative</span>
+            </button>
             )}
           </div>
         </div>
