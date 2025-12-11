@@ -451,37 +451,19 @@ export default function GeneratePage() {
   const renderSuccessState = () => {
     if (!generationResult) return null;
     
-    // 비율에 따른 aspect ratio 클래스 매핑
-    const getAspectRatioClass = (ratio: string) => {
-      switch (ratio) {
-        case '1:1':
-          return 'aspect-square';
-        case '16:9':
-          return 'aspect-video';
-        case '9:16':
-          return 'aspect-[9/16]';
-        case '4:5':
-          return 'aspect-[4/5]';
-        default:
-          return 'aspect-[4/3]'; // 기본값
-      }
-    };
-    
-    const aspectRatioClass = getAspectRatioClass(settings.ratio);
-    
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {generationResult.images.map((image, idx) => (
             <div
               key={image.image_id}
               className="bg-white/90 border border-white/70 rounded-[28px] shadow-[0_18px_45px_rgba(90,118,171,0.16)] p-4 flex flex-col gap-4"
             >
-              <div className={`rounded-[20px] bg-[#EEF3FF] ${aspectRatioClass} overflow-hidden flex items-center justify-center`}>
+              <div className="rounded-[20px] bg-[#EEF3FF] overflow-hidden flex items-center justify-center w-full">
                 <img
                   src={`data:image/png;base64,${image.base64}`}
                   alt={`Generated ${idx + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto object-contain"
                 />
               </div>
               <button
@@ -1002,11 +984,11 @@ export default function GeneratePage() {
 
         <section className="flex-1 pr-8 py-6 overflow-y-auto">
           <div className="max-w-5xl mx-auto">
-            <div className="rounded-[24px] border border-white shadow-[0_12px_40px_rgba(90,118,171,0.15)] px-8 py-4">
+            <div className="rounded-[24px] border border-white shadow-[0_12px_40px_rgba(90,118,171,0.15)] px-5 py-5">
               <p className="text-h5 text-gray-900">Your ad creative will appear here.</p>
             </div>
 
-            <div className="min-h-[460px] flex items-center justify-center mt-6">
+            <div className="min-h-[460px] flex items-center justify-center mt-5">
               {renderCanvasContent()}
             </div>
           </div>
