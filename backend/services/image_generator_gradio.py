@@ -202,7 +202,6 @@ class GradioImageGenerator:
                             break  # 성공 시 루프 탈출
                         
                     except Exception as e:
-                    except Exception as e:
                         retry_count += 1
                         if retry_count >= max_retries:
                             logger.error(f"❌ 이미지 {idx+1} 생성 실패 (재시도 {retry_count}회): {str(e)}")
