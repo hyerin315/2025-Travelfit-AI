@@ -127,7 +127,11 @@ async def startup_event():
     logger.info("=" * 60)
     logger.info(f"📍 호스트: {settings.HOST}:{settings.PORT}")
     logger.info(f"📁 이미지 저장 경로: {settings.GENERATED_IMAGES_DIR}")
-    logger.info(f"🔑 API 토큰 설정: {'✅ 완료' if settings.HUGGINGFACE_API_TOKEN else '❌ 미설정'}")
+    # Google AI API 키 우선 체크, 없으면 기존 토큰 체크
+    api_token_set = bool(settings.GOOGLE_AI_API_KEY or settings.HUGGINGFACE_API_TOKEN or settings.REPLICATE_API_TOKEN)
+    logger.info(f"🔑 API 토큰 설정: {'✅ 완료' if api_token_set else '❌ 미설정'}")
+    if settings.GOOGLE_AI_API_KEY:
+        logger.info(f"   Google AI Studio 모델: {settings.GOOGLE_AI_MODEL}")
     logger.info(f"🌐 CORS 허용 Origin: {settings.allowed_origins_list}")
     if settings.DEBUG:
         logger.info(f"📚 API 문서: http://{settings.HOST}:{settings.PORT}/docs (DEBUG 모드)")

@@ -84,10 +84,14 @@ settings.GENERATED_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 def validate_settings():
     """설정 검증"""
-    if not settings.HUGGINGFACE_API_TOKEN and not settings.REPLICATE_API_TOKEN:
-        print("⚠️  경고: API 토큰이 설정되지 않았습니다!")
-        print("   .env 파일에 HUGGINGFACE_API_TOKEN 또는 REPLICATE_API_TOKEN을 설정해주세요.")
-        print("   Hugging Face 토큰 발급: https://huggingface.co/settings/tokens")
-        return False
-    return True
+    # Google AI API 키가 설정되어 있으면 OK
+    if settings.GOOGLE_AI_API_KEY:
+        return True
+    # 기존 API 토큰들도 체크 (하위 호환성)
+    if settings.HUGGINGFACE_API_TOKEN or settings.REPLICATE_API_TOKEN:
+        return True
+    print("⚠️  경고: API 토큰이 설정되지 않았습니다!")
+    print("   .env 파일에 GOOGLE_AI_API_KEY를 설정해주세요.")
+    print("   또는 HUGGINGFACE_API_TOKEN 또는 REPLICATE_API_TOKEN을 설정해주세요.")
+    return False
 

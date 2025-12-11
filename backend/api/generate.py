@@ -56,9 +56,11 @@ async def generate_images(request: ImageGenerationRequest):
     
     # 2. API 토큰 검증
     if not image_generator.validate_api_token():
+        logger.error("❌ Google AI API 키가 설정되지 않았습니다!")
+        logger.error(f"   GOOGLE_AI_API_KEY: {'설정됨' if settings.GOOGLE_AI_API_KEY else '미설정'}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="API 토큰이 설정되지 않았습니다. 서버 관리자에게 문의하세요."
+            detail="Google AI API 키가 설정되지 않았습니다. .env 파일에 GOOGLE_AI_API_KEY를 설정해주세요."
         )
     
     # 3. 프롬프트 생성 (번역 포함 - 비동기)
