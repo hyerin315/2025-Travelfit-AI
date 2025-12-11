@@ -740,8 +740,8 @@ export default function GeneratePage() {
             boxShadow: '0 25px 80px rgba(72,93,138,0.18)',
           }}
         >
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-h5 text-gray-900">Customization</h2>
+          <div className="mb-5">
+            <h2 className="text-h5 text-gray-900 mb-3">Customization</h2>
             <div className="flex items-center gap-3">
               {hasAnyPreset ? (
                 <>
