@@ -70,7 +70,10 @@ class PromptEngine:
         # 7. 품질 향상 프롬프트
         quality_prompt = self._build_quality_prompt()
         
-        # 8. 최종 Positive Prompt 조합
+        # 8. 이미지 크기 결정 (프롬프트 조합 전에 결정)
+        width, height = self._get_image_dimensions(request.ratio)
+        
+        # 9. 최종 Positive Prompt 조합 (크기 정보 포함)
         positive_prompt = self._combine_prompts(
             base_prompt=base_prompt,
             persona_prompt=persona_prompt,
@@ -79,14 +82,13 @@ class PromptEngine:
             layout_prompt=layout_prompt,
             style_tone=preset.style_tone,
             color_grade=preset.color_grade,
-            quality_prompt=quality_prompt
+            quality_prompt=quality_prompt,
+            width=width,
+            height=height
         )
         
-        # 9. Negative Prompt 생성
+        # 10. Negative Prompt 생성
         negative_prompt = self._build_negative_prompt(request)
-        
-        # 10. 이미지 크기 결정
-        width, height = self._get_image_dimensions(request.ratio)
         
         return positive_prompt, negative_prompt, width, height
     
@@ -290,7 +292,9 @@ class PromptEngine:
         layout_prompt: str,
         style_tone: str,
         color_grade: str,
-        quality_prompt: str
+        quality_prompt: str,
+        width: int = None,
+        height: int = None
     ) -> str:
         """모든 프롬프트 요소를 하나로 조합하고 중복 제거"""
         # 모든 프롬프트 요소를 리스트로 수집
@@ -307,6 +311,20 @@ class PromptEngine:
         
         # 빈 문자열 제거 및 공백 정리
         prompt_parts = [part.strip() for part in prompt_parts if part and part.strip()]
+        
+        # 이미지 크기 정보를 프롬프트에 추가 (보조적으로)
+        if width and height:
+            # 비율에 따른 방향성 추가
+            ratio = width / height
+            if ratio > 1.3:
+                size_hint = "landscape orientation, wide format"
+            elif ratio < 0.8:
+                size_hint = "portrait orientation, vertical format"
+            else:
+                size_hint = "square format"
+            
+            # 크기 정보를 프롬프트에 추가 (낮은 가중치로)
+            prompt_parts.append(f"({size_hint}:1.1), ({width}x{height} resolution:1.05)")
         
         # 쉼표로 조합
         final_prompt = ", ".join(prompt_parts)

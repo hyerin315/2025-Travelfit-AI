@@ -123,6 +123,19 @@ class GradioImageGenerator:
                         client = Client(self.space_name)
                     
                     logger.info(f"✅ Gradio Client 연결 성공")
+                    
+                    # API 스펙 확인 (디버깅용)
+                    try:
+                        api_info = client.view_api()
+                        logger.info(f"📋 Gradio Space API 정보:")
+                        for endpoint in api_info:
+                            if endpoint.get("api_name") == self.api_endpoint:
+                                logger.info(f"   엔드포인트: {endpoint.get('api_name')}")
+                                for param in endpoint.get("parameters", []):
+                                    logger.info(f"   - {param.get('label', param.get('parameter_name', 'unknown'))}: {param.get('parameter_name', 'N/A')} (type: {param.get('component', 'N/A')})")
+                    except Exception as e:
+                        logger.warning(f"⚠️ API 정보 확인 실패: {str(e)}")
+                    
                     break  # 성공 시 루프 탈출
                     
                 except (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.TimeoutException) as e:
@@ -154,18 +167,41 @@ class GradioImageGenerator:
                 
                 while retry_count < max_retries:
                     try:
-                        result = client.predict(
-                            prompt=positive_prompt,
-                            negative_prompt=negative_prompt,
-                            seed=seed,
-                            randomize_seed=False,  # 시드 고정
-                            width=width,
-                            height=height,
-                            guidance_scale=settings.DEFAULT_GUIDANCE_SCALE,
-                            num_inference_steps=settings.DEFAULT_NUM_INFERENCE_STEPS,
-                            api_name=self.api_endpoint
-                        )
-                        break  # 성공 시 루프 탈출
+                        # Gradio Space의 파라미터 이름이 다를 수 있으므로 여러 시도
+                        predict_params = {
+                            "prompt": positive_prompt,
+                            "negative_prompt": negative_prompt,
+                            "seed": seed,
+                            "randomize_seed": False,
+                            "guidance_scale": settings.DEFAULT_GUIDANCE_SCALE,
+                            "num_inference_steps": settings.DEFAULT_NUM_INFERENCE_STEPS,
+                            "api_name": self.api_endpoint
+                        }
+                        
+                        # width, height 파라미터 추가 (여러 가능한 이름 시도)
+                        # 일반적인 파라미터 이름들
+                        width_params = ["width", "w", "image_width", "Width"]
+                        height_params = ["height", "h", "image_height", "Height"]
+                        
+                        # 먼저 표준 이름 시도
+                        predict_params["width"] = width
+                        predict_params["height"] = height
+                        
+                        try:
+                            result = client.predict(**predict_params)
+                            logger.info(f"✅ 이미지 {idx+1} 생성 성공 (width={width}, height={height})")
+                            break  # 성공 시 루프 탈출
+                        except (TypeError, KeyError) as param_error:
+                            # 파라미터 이름이 다를 수 있음 - 프롬프트에만 의존
+                            logger.warning(f"⚠️ width/height 파라미터 오류, 프롬프트에만 의존: {str(param_error)}")
+                            # width, height 제거하고 재시도
+                            predict_params.pop("width", None)
+                            predict_params.pop("height", None)
+                            result = client.predict(**predict_params)
+                            logger.info(f"✅ 이미지 {idx+1} 생성 성공 (프롬프트에 크기 정보 포함)")
+                            break  # 성공 시 루프 탈출
+                        
+                    except Exception as e:
                     except Exception as e:
                         retry_count += 1
                         if retry_count >= max_retries:
