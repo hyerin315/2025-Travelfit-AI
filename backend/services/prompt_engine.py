@@ -64,8 +64,8 @@ class PromptEngine:
         # 5. 레이아웃 프롬프트 생성
         layout_prompt = self._build_layout_prompt(request.layout)
         
-        # 6. 기본 방향성 프롬프트 (Travel-Fit AI의 핵심)
-        base_prompt = self._build_base_prompt()
+        # 6. 기본 방향성 프롬프트 (Travel-Fit AI의 핵심) - action에 따라 동적 조정
+        base_prompt = self._build_base_prompt(request.action)
         
         # 7. 품질 향상 프롬프트
         quality_prompt = self._build_quality_prompt()
@@ -138,9 +138,10 @@ class PromptEngine:
         if action_detail_en and action_detail_en.strip():
             persona_prompt += f", {action_detail_en}"
         
-        # 표정(expression) 추가 - 뒷모습이 아닐 때만, 이미 번역됨
-        if expression_en and expression_en.strip() and request.action != 'back':
-            persona_prompt += f", {expression_en}"
+        # 표정(expression) 추가 - 뒷모습/옆모습(귀까지만)일 때는 표정이 보이지 않으므로 제외
+        # 정면 포즈는 제공하지 않으므로 expression은 사용하지 않음
+        # if expression_en and expression_en.strip() and request.action not in ['back', 'side', 'front']:
+        #     persona_prompt += f", {expression_en}"
         
         return persona_prompt
     
@@ -171,7 +172,7 @@ class PromptEngine:
                 else:
                     return f"{landmark_prompt}, iconic travel destination, beautiful scenery, recognizable landmark visible in background"
             
-            # 랜드마크 프롬프트가 없으면 기본 정보 사용
+            # 랜드마크 프롬프트가 없으면 기본 정보 사용 (placeholder 제거)
             display_name = matched_location.get("display_name_en") or matched_location.get("display_name_kr") or location
             city_country = ""
             if matched_location.get("city_en"):
@@ -180,9 +181,9 @@ class PromptEngine:
                 city_country += matched_location["country_en"]
             
             if city_country:
-                return f"at {city_country}, {display_name}, (Specific City/Country name), (Iconic Landmark name), (Regional Architecture style), iconic travel destination, beautiful scenery, recognizable landmark visible in background"
+                return f"at {city_country}, {display_name}, iconic travel destination, beautiful scenery, recognizable landmark visible in background, regional architecture style"
             else:
-                return f"at {display_name}, (Specific City/Country name), (Iconic Landmark name), (Regional Architecture style), iconic travel destination, beautiful scenery, recognizable landmark visible in background"
+                return f"at {display_name}, iconic travel destination, beautiful scenery, recognizable landmark visible in background, regional architecture style"
         
         # 매칭되지 않으면 기본 처리 (기존 로직 유지)
         location_hints = {
@@ -207,8 +208,8 @@ class PromptEngine:
         for kor, eng in location_hints.items():
             location_english = location_english.replace(kor, eng)
         
-        # 구체적인 도시/국가명, 랜드마크, 지역 건축 스타일 강조
-        return f"at {location_english}, (Specific City/Country name), (Iconic Landmark name), (Regional Architecture style), iconic travel destination, beautiful scenery, recognizable landmark visible in background"
+        # placeholder 제거, 구체적인 장소 정보만 포함
+        return f"at {location_english}, iconic travel destination, beautiful scenery, recognizable landmark visible in background, regional architecture style"
     
     def _build_lighting_prompt(self, preset: BrandPreset, time_of_day: str) -> str:
         """시간대/조명 프롬프트 생성"""
@@ -225,13 +226,14 @@ class PromptEngine:
         layout_config = LAYOUT_MAP.get(layout, LAYOUT_MAP["center"])
         return layout_config["prompt"]
     
-    def _build_base_prompt(self) -> str:
+    def _build_base_prompt(self, action: str = "back") -> str:
         """
         Travel-Fit AI의 핵심 방향성 프롬프트
         자연스럽고 마케팅에 활용 가능한 실사 느낌
-        풍경 중심 구도 강조, 인물 통제
+        뒷모습 또는 옆모습(귀까지만)만 지원, 정면 포즈는 제공하지 않음
         """
-        return (
+        # 공통 기본 프롬프트
+        common_base = (
             "authentic travel photography for marketing, natural lifestyle photo, "
             "social media content, real-life moment, candid travel shot, "
             "unposed authentic vibe, natural lighting, realistic atmosphere, "
@@ -239,11 +241,32 @@ class PromptEngine:
             "natural color palette, not oversaturated, soft contrast, "
             "smartphone or mirrorless camera aesthetic, genuine travel experience, "
             "breathtaking landscape, panoramic view, wide shot, expansive scenery, "
-            "person in background, figure in distance, facing away, back shot, "
-            "full body shot (with low weight), "
-            "subjects captured from back view or gentle side profile, candidly looking away from camera, "
-            "absolutely no direct front-facing pose, no eye contact with viewer"
+            "full body shot"
         )
+        
+        # action에 따른 인물 포즈 방향성 추가 (정면 제외)
+        if action == "back":
+            # 뒷모습일 때: 뒷모습 강조
+            return (
+                f"{common_base}, "
+                "person in background, figure in distance, facing away from camera, "
+                "back view, subjects captured from back view, candidly looking away from camera"
+            )
+        elif action == "side":
+            # 옆모습일 때: 프로필 강조 (귀까지만 보이게)
+            return (
+                f"{common_base}, "
+                "person in mid-ground, side profile view, gentle side profile, "
+                "subjects captured from side angle, looking away from camera, "
+                "only ear and side of head visible, partial face profile, no full face visible"
+            )
+        else:
+            # 기본값 또는 front가 들어온 경우: 뒷모습으로 처리
+            return (
+                f"{common_base}, "
+                "person in background, figure in distance, facing away from camera, "
+                "back view, subjects captured from back view, candidly looking away from camera"
+            )
     
     def _build_quality_prompt(self) -> str:
         """
@@ -269,20 +292,31 @@ class PromptEngine:
         color_grade: str,
         quality_prompt: str
     ) -> str:
-        """모든 프롬프트 요소를 하나로 조합"""
-        final_prompt = (
-            f"{base_prompt}, "  # 맨 앞에 기본 방향성 추가
-            f"{persona_prompt}, "
-            f"{location_prompt}, "
-            f"{lighting_prompt}, "
-            f"{layout_prompt}, "
-            f"{style_tone}, "
-            f"{color_grade}, "
-            f"{quality_prompt}"
-        )
+        """모든 프롬프트 요소를 하나로 조합하고 중복 제거"""
+        # 모든 프롬프트 요소를 리스트로 수집
+        prompt_parts = [
+            base_prompt,
+            persona_prompt,
+            location_prompt,
+            lighting_prompt,
+            layout_prompt,
+            style_tone,
+            color_grade,
+            quality_prompt
+        ]
+        
+        # 빈 문자열 제거 및 공백 정리
+        prompt_parts = [part.strip() for part in prompt_parts if part and part.strip()]
+        
+        # 쉼표로 조합
+        final_prompt = ", ".join(prompt_parts)
         
         # 중복 공백 제거 및 정리
         final_prompt = " ".join(final_prompt.split())
+        
+        # 연속된 쉼표 제거
+        while ", ," in final_prompt:
+            final_prompt = final_prompt.replace(", ,", ",")
         
         return final_prompt
     
@@ -298,21 +332,19 @@ class PromptEngine:
         elif request.persona.startswith("3_"):
             negative += ", one person, two people, crowd, many people"
         
-        # 기본적으로 정면 금지 (사용자가 front 명시한 경우 제외)
-        if request.action != "front":
-            negative += ", front view, frontal pose, facing camera, direct eye contact, face toward viewer, straight-on portrait"
+        # action에 따른 포즈 제약 (정면은 항상 금지, 뒷모습/옆모습만 허용)
+        # 정면 관련 항목은 항상 negative에 포함
+        negative += ", front view, frontal pose, facing camera, direct eye contact, face toward viewer, straight-on portrait, eye contact with camera, face clearly visible, full face visible"
         
-        # 뒷모습일 때 얼굴 강력히 금지
         if request.action == "back":
-            negative += ", face visible, front view, looking at camera, facing camera, frontal view, eye contact, face shown, facial features visible, frontal shot, face to camera, person looking at viewer, direct eye contact, face portrait, facial close-up, seeing face, front facing, looking directly"
-        
-        # 앞모습일 때 뒷모습 금지
-        if request.action == "front":
-            negative += ", back view, rear view, turned away, facing away, back to camera, posterior view, back shot, rear shot"
-        
-        # 옆모습일 때 정면/뒷모습 금지
-        if request.action == "side":
-            negative += ", front view, back view, facing camera, turned completely away, frontal view, rear view"
+            # 뒷모습일 때: 얼굴/정면/옆모습 금지
+            negative += ", face visible, face shown, facial features visible, frontal shot, face to camera, person looking at viewer, direct eye contact, face portrait, facial close-up, seeing face, front facing, looking directly, side profile, side view, profile shot, ear visible"
+        elif request.action == "side":
+            # 옆모습일 때: 정면/뒷모습/전체 얼굴 금지 (귀까지만 허용)
+            negative += ", front view, back view, facing camera, turned completely away, frontal view, rear view, back to camera, posterior view, full face visible, both eyes visible, nose visible, mouth visible, face portrait, facial close-up"
+        else:
+            # 기본값 또는 front가 들어온 경우: 뒷모습으로 처리, 정면/옆모습 금지
+            negative += ", face visible, face shown, facial features visible, side profile, side view, profile shot, ear visible"
         
         # 여행 테마 적합성 - 스튜디오 샷, 지루한 배경 배제
         negative += ", cluttered background, distracting elements"
@@ -328,14 +360,17 @@ class PromptEngine:
         return ratio_config["width"], ratio_config["height"]
     
     def _build_action_prompt(self, action: str) -> str:
-        """행동 프롬프트 생성 (앞/뒤/옆모습) - 매우 강화된 프롬프트"""
+        """행동 프롬프트 생성 (뒷모습/옆모습만) - 가중치를 사용한 강화된 프롬프트"""
         action_map = {
-            "front": "IMPORTANT: facing camera, front view, looking directly at camera, frontal shot, face clearly visible to viewer, eye contact with camera, front side only",
-            "back": "IMPORTANT: back view ONLY, rear view ONLY, person completely facing away from camera, back to camera, showing ONLY back, absolutely NO face visible, back side exclusively, completely turned away, looking away from camera, cannot see any facial features, back shot, posterior view",
-            "side": "IMPORTANT: side profile ONLY, side view exclusively, profile shot, lateral view, 90 degree angle, side angle strictly, profile perspective",
+            "back": "(back view:1.5), (rear view:1.4), (person completely facing away from camera:1.5), (back to camera:1.5), (no face visible:1.6), (back side only:1.4), (completely turned away:1.4), (looking away from camera:1.3), (cannot see facial features:1.5), posterior view",
+            "side": "(side profile:1.4), (side view:1.3), (profile shot:1.3), (lateral view:1.3), (90 degree angle:1.2), (side angle:1.3), (only ear visible:1.4), (partial face profile:1.3), (no full face:1.4), profile perspective",
         }
         
-        return action_map.get(action, "natural pose")
+        # front가 들어오면 뒷모습으로 처리
+        if action == "front":
+            action = "back"
+        
+        return action_map.get(action, "(back view:1.4), (facing away from camera:1.3), natural pose")
     
     def _translate_action_hint(self, action_korean: str) -> str:
         """행동을 영어 힌트로 변환 (간단한 매핑) - 추가 프롬프트용"""
