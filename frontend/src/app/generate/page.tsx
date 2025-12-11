@@ -679,7 +679,7 @@ export default function GeneratePage() {
     if (!generationResult) return null;
     
     return (
-      <div className="space-y-5 w-full max-h-full overflow-y-auto">
+      <div className="space-y-5 w-full max-h-full overflow-y-auto overflow-x-visible px-4 py-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {generationResult.images.map((image, idx) => (
             <div
@@ -1261,7 +1261,7 @@ export default function GeneratePage() {
               <p className="text-h5 text-gray-900">Your ad creative will appear here.</p>
             </div>
 
-            <div className="flex items-center justify-center mt-5 flex-1 overflow-y-auto min-h-0">
+            <div className="flex items-center justify-center mt-5 flex-1 overflow-y-auto min-h-0 overflow-x-visible">
               {renderCanvasContent()}
             </div>
           </div>
