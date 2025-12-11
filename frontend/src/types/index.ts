@@ -39,7 +39,7 @@ export interface ImageGenerationRequest {
 export interface GeneratedImage {
   image_id: string;
   filename: string;
-  url: string;
+  base64: string;
   seed: number;
 }
 
