@@ -18,6 +18,7 @@ export type BrandStyleOption = {
   label: string;
   description: string;
   toneManner: string;
+  imagePath: string;
 };
 
 export type LayoutOption = {
@@ -109,30 +110,35 @@ export const BRAND_STYLE_OPTIONS: BrandStyleOption[] = [
     label: 'Vibrant & Energetic',
     description: 'High saturation, dynamic composition, cinematic lighting.',
     toneManner: 'vibrant_energetic',
+    imagePath: '/assets/vibrant-energetic.svg',
   },
   {
     value: 'awe_inspiring_nature',
     label: 'Awe-Inspiring Nature',
     description: 'Sharp details, rich colors, dramatic documentary style.',
     toneManner: 'awe_inspiring_nature',
+    imagePath: '/assets/awe-inspiring-nature.svg',
   },
   {
     value: 'warm_life_snap',
     label: 'Warm Life Snap',
     description: 'Cozy daylight, shallow depth, warm inviting mood.',
     toneManner: 'warm_life_snap',
+    imagePath: '/assets/warm-life-snap.svg',
   },
   {
     value: 'minimalist_city_snap',
     label: 'Minimalist City Snap',
     description: 'Minimalist geometry, clean composition, low contrast.',
     toneManner: 'minimalist_city_snap',
+    imagePath: '/assets/minimalist-city-snap.svg',
   },
   {
     value: 'vintage_film_look',
     label: 'Vintage Film Look',
     description: 'Film grain, light leaks, analog grading, moody feel.',
     toneManner: 'vintage_film_look',
+    imagePath: '/assets/vintage-film-look.svg',
   },
 ];
 
