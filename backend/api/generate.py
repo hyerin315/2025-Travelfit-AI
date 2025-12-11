@@ -41,6 +41,13 @@ async def generate_images(request: ImageGenerationRequest):
     
     # 1. 세션 검증 및 프리셋 조회
     preset = session_manager.get_preset(request.session_id)
+    
+    # 프리셋 정보 로깅 (인종 다양성 확인용)
+    if preset:
+        from data.mappings import NATIONALITY_MAP
+        nationality_display = NATIONALITY_MAP.get(preset.nationality, preset.nationality)
+        logger.info(f"   nationality: {preset.nationality} -> {nationality_display}")
+        logger.info(f"   age_group: {preset.age_group}")
     if not preset:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

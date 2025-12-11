@@ -152,8 +152,28 @@ class PromptEngine:
         if not location or not location.strip():
             return "iconic travel destination, beautiful scenery"
         
-        # LOCATION_DATA에서 검색
-        search_results = search_locations(location, limit=1)
+        # Spot이 포함된 경우 (예: "Central Park, New York") 처리
+        # 콤마로 분리하여 Spot과 City를 구분
+        location_parts = [part.strip() for part in location.split(',')]
+        search_query = location_parts[0]  # Spot 이름 (예: "Central Park")
+        city_name = location_parts[1] if len(location_parts) > 1 else None  # City 이름 (예: "New York")
+        
+        # LOCATION_DATA에서 검색 (Spot 우선, 없으면 전체 location으로 검색)
+        search_results = search_locations(search_query, limit=5)
+        
+        # City가 있으면 City와 매칭되는 결과 우선 선택
+        if city_name and search_results:
+            city_matched = [r for r in search_results if city_name.lower() in r.get("city_en", "").lower() or city_name.lower() in r.get("display_name_en", "").lower()]
+            if city_matched:
+                search_results = city_matched[:1]
+            else:
+                search_results = search_results[:1]
+        else:
+            search_results = search_results[:1] if search_results else []
+        
+        # 검색 결과가 없으면 전체 location으로 재검색
+        if not search_results:
+            search_results = search_locations(location, limit=1)
         
         if search_results:
             # 가장 매칭된 결과 사용
