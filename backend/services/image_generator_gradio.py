@@ -35,8 +35,8 @@ class GradioImageGenerator:
         Args:
             positive_prompt: Positive 프롬프트
             negative_prompt: Negative 프롬프트
-            width: 이미지 너비 (Gradio Space에서는 무시됨)
-            height: 이미지 높이 (Gradio Space에서는 무시됨)
+            width: 이미지 너비
+            height: 이미지 높이
             generation_id: 생성 작업 ID
             
         Returns:
@@ -47,6 +47,7 @@ class GradioImageGenerator:
         logger.info(f"🎨 Gradio Client 이미지 생성 시작: generation_id={generation_id}")
         logger.info(f"   Space: {self.space_name}")
         logger.info(f"   프롬프트: {positive_prompt[:100]}...")
+        logger.info(f"   이미지 크기: {width}x{height}")
         logger.info(f"   Guidance Scale: {settings.DEFAULT_GUIDANCE_SCALE}")
         
         try:
@@ -55,6 +56,8 @@ class GradioImageGenerator:
                 self._generate_images_sync,
                 positive_prompt,
                 negative_prompt,
+                width,
+                height,
                 generation_id
             )
             
@@ -74,6 +77,8 @@ class GradioImageGenerator:
         self,
         positive_prompt: str,
         negative_prompt: str,
+        width: int,
+        height: int,
         generation_id: str
     ) -> List[Dict]:
         """
@@ -154,8 +159,8 @@ class GradioImageGenerator:
                             negative_prompt=negative_prompt,
                             seed=seed,
                             randomize_seed=False,  # 시드 고정
-                            width=768,
-                            height=576,
+                            width=width,
+                            height=height,
                             guidance_scale=settings.DEFAULT_GUIDANCE_SCALE,
                             num_inference_steps=settings.DEFAULT_NUM_INFERENCE_STEPS,
                             api_name=self.api_endpoint
@@ -179,8 +184,45 @@ class GradioImageGenerator:
                     if temp_image_path and isinstance(temp_image_path, str):
                         # 이미지를 base64로 인코딩 (서버 저장 없이 클라이언트로 직접 전달)
                         try:
-                            with open(temp_image_path, "rb") as img_file:
-                                image_bytes = img_file.read()
+                            from PIL import Image
+                            import io
+                            
+                            # 이미지 열기
+                            with Image.open(temp_image_path) as img:
+                                original_width, original_height = img.size
+                                
+                                # 요청한 크기와 실제 생성된 크기가 다를 경우 리사이즈/크롭
+                                if original_width != width or original_height != height:
+                                    logger.info(f"🔄 이미지 {idx+1} 크기 조정: {original_width}x{original_height} -> {width}x{height}")
+                                    
+                                    # 비율 유지하면서 리사이즈 후 크롭 (center crop)
+                                    # 1. 비율 계산
+                                    target_ratio = width / height
+                                    original_ratio = original_width / original_height
+                                    
+                                    if target_ratio > original_ratio:
+                                        # 타겟이 더 넓음: 높이 기준으로 리사이즈 후 좌우 크롭
+                                        new_height = height
+                                        new_width = int(original_width * (height / original_height))
+                                        img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                                        # 좌우 중앙 크롭
+                                        left = (new_width - width) // 2
+                                        img = img.crop((left, 0, left + width, height))
+                                    else:
+                                        # 타겟이 더 높음: 너비 기준으로 리사이즈 후 상하 크롭
+                                        new_width = width
+                                        new_height = int(original_height * (width / original_width))
+                                        img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                                        # 상하 중앙 크롭
+                                        top = (new_height - height) // 2
+                                        img = img.crop((0, top, width, top + height))
+                                    
+                                    logger.info(f"✅ 이미지 {idx+1} 크기 조정 완료: {img.size[0]}x{img.size[1]}")
+                                
+                                # PIL Image를 bytes로 변환
+                                img_byte_arr = io.BytesIO()
+                                img.save(img_byte_arr, format='PNG', optimize=True)
+                                image_bytes = img_byte_arr.getvalue()
                             
                             # 이미지 크기 검증 (최대 10MB)
                             MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB

@@ -104,22 +104,22 @@ LAYOUT_MAP = {
     "center": {
         "name": "중앙",
         "description": "중앙에 카피 공간 확보",
-        "prompt": "IMPORTANT: leave a clean vertical column in the center for typography, main subjects positioned slightly to left or right thirds, rule of thirds composition, central area must stay free from people or props, balanced composition with negative space in the middle, empty space center, rule of thirds"
+        "prompt": "(clean vertical column in center:1.5), (empty space center:1.4), (main subjects on left or right thirds:1.3), (rule of thirds composition:1.2), (central area free from people:1.5), (central area free from props:1.4), (negative space in middle:1.3), (balanced composition:1.2), (typography space center:1.4)"
     },
     "left": {
         "name": "인물 좌측",
         "description": "오른쪽에 카피 공간 확보",
-        "prompt": "subject anchored on the left third of the frame, right third must be clear empty background reserved for copy, shift people to left side only, rule of thirds composition, strong negative space on right, empty space right, no subjects or objects overlapping right copy zone, rule of thirds"
+        "prompt": "(subject on left third:1.5), (empty space right:1.5), (clear background right:1.4), (people on left side only:1.4), (no subjects on right:1.5), (no objects on right:1.4), (rule of thirds:1.2), (negative space right:1.4), (copy zone right empty:1.5), (text overlay space right:1.4)"
     },
     "right": {
         "name": "인물 우측",
         "description": "왼쪽에 카피 공간 확보",
-        "prompt": "subject anchored on the right third of the frame, left third intentionally empty for text overlay, people and props stay on right only, rule of thirds composition, generous negative space on left, empty space left, absolutely no subjects blocking left copy zone, rule of thirds"
+        "prompt": "(subject on right third:1.5), (empty space left:1.5), (clear background left:1.4), (people on right side only:1.4), (no subjects on left:1.5), (no objects on left:1.4), (rule of thirds:1.2), (negative space left:1.4), (copy zone left empty:1.5), (text overlay space left:1.4)"
     },
     "bottom": {
         "name": "하단 여백",
         "description": "하단 배너 카피 공간 확보",
-        "prompt": "composition keeps subjects in upper two thirds, lower third remains clean gradient background for headline, horizon line raised, avoid people or objects near bottom edge, provide wide negative space across bottom for text banner, empty space bottom, rule of thirds composition"
+        "prompt": "(subjects in upper two thirds:1.5), (empty space bottom:1.5), (clean gradient background bottom:1.4), (horizon line raised:1.3), (no people near bottom:1.4), (no objects near bottom:1.4), (negative space bottom:1.5), (text banner space bottom:1.4), (rule of thirds:1.2)"
     }
 }
 
