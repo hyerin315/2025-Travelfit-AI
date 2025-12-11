@@ -80,11 +80,20 @@ async def get_preset(session_id: str):
     세션의 프리셋 정보 조회
     
     Args:
-        session_id: 세션 ID
+        session_id: 세션 ID (UUID 형식)
         
     Returns:
         프리셋 정보
     """
+    # UUID 형식 검증
+    import re
+    uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    if not re.match(uuid_pattern, session_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid session ID format"
+        )
+    
     session = session_manager.get_session(session_id)
     
     if not session:

@@ -16,6 +16,8 @@ from data.mappings import (
     TIME_OF_DAY_MAP,
     IMAGE_RATIOS,
     NEGATIVE_PROMPT_BASE,
+    search_locations,
+    get_location_by_id,
 )
 from models.preset import BrandPreset
 from models.generation import ImageGenerationRequest
@@ -143,9 +145,46 @@ class PromptEngine:
         return persona_prompt
     
     def _build_location_prompt(self, location: str) -> str:
-        """장소 프롬프트 생성"""
-        # 한글 장소를 영어로 변환하는 간단한 힌트
-        # TODO: 향후 번역 API 또는 더 정교한 매핑 추가
+        """장소 프롬프트 생성 - LOCATION_DATA를 활용하여 구체적인 랜드마크 프롬프트 삽입"""
+        if not location or not location.strip():
+            return "iconic travel destination, beautiful scenery"
+        
+        # LOCATION_DATA에서 검색
+        search_results = search_locations(location, limit=1)
+        
+        if search_results:
+            # 가장 매칭된 결과 사용
+            matched_location = search_results[0]
+            
+            # 랜드마크 프롬프트가 있으면 우선 사용
+            if matched_location.get("landmark_prompt"):
+                landmark_prompt = matched_location["landmark_prompt"]
+                # 도시/국가 정보 추가
+                city_country = ""
+                if matched_location.get("city_en"):
+                    city_country = f"{matched_location['city_en']}, "
+                if matched_location.get("country_en"):
+                    city_country += matched_location["country_en"]
+                
+                if city_country:
+                    return f"at {city_country}, {landmark_prompt}, iconic travel destination, beautiful scenery, recognizable landmark visible in background"
+                else:
+                    return f"{landmark_prompt}, iconic travel destination, beautiful scenery, recognizable landmark visible in background"
+            
+            # 랜드마크 프롬프트가 없으면 기본 정보 사용
+            display_name = matched_location.get("display_name_en") or matched_location.get("display_name_kr") or location
+            city_country = ""
+            if matched_location.get("city_en"):
+                city_country = f"{matched_location['city_en']}, "
+            if matched_location.get("country_en"):
+                city_country += matched_location["country_en"]
+            
+            if city_country:
+                return f"at {city_country}, {display_name}, (Specific City/Country name), (Iconic Landmark name), (Regional Architecture style), iconic travel destination, beautiful scenery, recognizable landmark visible in background"
+            else:
+                return f"at {display_name}, (Specific City/Country name), (Iconic Landmark name), (Regional Architecture style), iconic travel destination, beautiful scenery, recognizable landmark visible in background"
+        
+        # 매칭되지 않으면 기본 처리 (기존 로직 유지)
         location_hints = {
             "파리": "Paris",
             "에펠탑": "Eiffel Tower",
@@ -168,7 +207,8 @@ class PromptEngine:
         for kor, eng in location_hints.items():
             location_english = location_english.replace(kor, eng)
         
-        return f"at {location_english}, iconic travel destination, beautiful scenery"
+        # 구체적인 도시/국가명, 랜드마크, 지역 건축 스타일 강조
+        return f"at {location_english}, (Specific City/Country name), (Iconic Landmark name), (Regional Architecture style), iconic travel destination, beautiful scenery, recognizable landmark visible in background"
     
     def _build_lighting_prompt(self, preset: BrandPreset, time_of_day: str) -> str:
         """시간대/조명 프롬프트 생성"""
@@ -189,6 +229,7 @@ class PromptEngine:
         """
         Travel-Fit AI의 핵심 방향성 프롬프트
         자연스럽고 마케팅에 활용 가능한 실사 느낌
+        풍경 중심 구도 강조, 인물 통제
         """
         return (
             "authentic travel photography for marketing, natural lifestyle photo, "
@@ -197,6 +238,9 @@ class PromptEngine:
             "slightly grainy texture, film grain effect, subtle imperfections, "
             "natural color palette, not oversaturated, soft contrast, "
             "smartphone or mirrorless camera aesthetic, genuine travel experience, "
+            "breathtaking landscape, panoramic view, wide shot, expansive scenery, "
+            "person in background, figure in distance, facing away, back shot, "
+            "full body shot (with low weight), "
             "subjects captured from back view or gentle side profile, candidly looking away from camera, "
             "absolutely no direct front-facing pose, no eye contact with viewer"
         )
@@ -243,7 +287,7 @@ class PromptEngine:
         return final_prompt
     
     def _build_negative_prompt(self, request: ImageGenerationRequest) -> str:
-        """네거티브 프롬프트 생성"""
+        """네거티브 프롬프트 생성 - 신체 기형 방지, 여행 테마 적합성, 인물 과부각 방지 강화"""
         negative = NEGATIVE_PROMPT_BASE.strip()
         
         # 인물 수에 따른 추가 네거티브 프롬프트
@@ -269,6 +313,9 @@ class PromptEngine:
         # 옆모습일 때 정면/뒷모습 금지
         if request.action == "side":
             negative += ", front view, back view, facing camera, turned completely away, frontal view, rear view"
+        
+        # 여행 테마 적합성 - 스튜디오 샷, 지루한 배경 배제
+        negative += ", cluttered background, distracting elements"
         
         return negative
     
