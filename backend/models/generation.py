@@ -7,13 +7,19 @@ from typing import Optional, List
 
 class ImageGenerationRequest(BaseModel):
     """화면 2: 이미지 생성 요청"""
-    session_id: str = Field(..., description="프리셋 세션 ID")
+    session_id: str = Field(
+        ...,
+        description="프리셋 세션 ID",
+        pattern=r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+        examples=["550e8400-e29b-41d4-a716-446655440000"]
+    )
     
     # 필수 입력
     location: str = Field(
         ...,
         description="장소 (예: 파리 에펠탑)",
         min_length=1,
+        max_length=200,
         examples=["파리 에펠탑", "제주도 성산일출봉", "뉴욕 센트럴파크"]
     )
     persona: str = Field(
@@ -31,11 +37,13 @@ class ImageGenerationRequest(BaseModel):
     action_detail: Optional[str] = Field(
         default="",
         description="추가 행동 프롬프트 (예: 피크닉하며 와인 마시고 있음)",
+        max_length=500,
         examples=["피크닉하며 와인 마시고 있음", "사진을 찍고 있음", "걷고 있음"]
     )
     expression: Optional[str] = Field(
         default="",
         description="표정 (예: 미소짓고 있음) - 뒷모습일 때는 무시됨",
+        max_length=200,
         examples=["미소짓고 있음", "웃고 있음", "편안한 표정"]
     )
     time_of_day: str = Field(
@@ -57,9 +65,9 @@ class ImageGenerationRequest(BaseModel):
 
 class GeneratedImage(BaseModel):
     """생성된 단일 이미지 정보"""
-    image_id: str = Field(..., description="이미지 고유 ID")
-    filename: str = Field(..., description="파일명")
-    url: str = Field(..., description="이미지 다운로드 URL")
+    image_id: str = Field(..., description="이미지 고유 ID", max_length=100)
+    filename: str = Field(..., description="파일명", max_length=200)
+    base64: str = Field(..., description="base64 인코딩된 이미지 데이터", max_length=15_000_000)  # 약 10MB 이미지 (base64는 약 33% 증가)
     seed: int = Field(..., description="사용된 시드값")
 
 
