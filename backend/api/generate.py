@@ -15,7 +15,7 @@ from models.generation import (
 )
 from services.session_manager import session_manager
 from services.prompt_engine import prompt_engine
-from services.image_generator_gradio import image_generator  # SD 3.5 Large (내 Space)
+from services.image_generator_google_ai import image_generator  # Google AI Studio Nano Banana
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ async def generate_images(request: ImageGenerationRequest):
             logger.error(f"❌ 이미지 생성 실패: images_data가 비어있습니다. seeds={seeds}")
             raise Exception(
                 "이미지 생성에 실패했습니다. "
-                "Hugging Face API가 응답하지 않았거나 모델이 로딩 중일 수 있습니다. "
+                "Google AI Studio API가 응답하지 않았거나 할당량을 초과했을 수 있습니다. "
                 "잠시 후 다시 시도해주세요."
             )
         

@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     # API 키
     HUGGINGFACE_API_TOKEN: str = ""
     REPLICATE_API_TOKEN: str = ""
+    GOOGLE_AI_API_KEY: str = ""  # Google AI Studio API 키
+    GOOGLE_AI_MODEL: str = "gemini-2.5-flash-image-preview"  # Nano Banana 모델 (무료 티어 작동 확인됨)
     
     # Naver Papago 번역 API (선택사항)
     NAVER_CLIENT_ID: str = ""
