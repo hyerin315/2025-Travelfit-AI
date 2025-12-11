@@ -679,7 +679,7 @@ export default function GeneratePage() {
     if (!generationResult) return null;
     
     return (
-      <div className="space-y-5">
+      <div className="space-y-5 w-full max-h-full overflow-y-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {generationResult.images.map((image, idx) => (
             <div
@@ -690,12 +690,12 @@ export default function GeneratePage() {
                 <img
                   src={`data:image/png;base64,${image.base64}`}
                   alt={`Generated ${idx + 1}`}
-                  className="w-full h-auto object-contain"
+                  className="w-full h-auto object-contain max-h-[600px]"
                 />
               </div>
               <button
                 onClick={() => handleDownload(image)}
-                className="w-full rounded-2xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] text-white text-sm font-semibold py-3 shadow-lg hover:opacity-95 transition"
+                className="w-full rounded-2xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] text-white text-sm font-semibold py-3 shadow-lg hover:opacity-95 transition flex-shrink-0"
               >
                 Download
               </button>
@@ -766,9 +766,9 @@ export default function GeneratePage() {
         </div>
       </div>
 
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         <div
-          className="w-full max-w-[360px] px-6 py-5 overflow-y-auto m-5 rounded-[28px] border border-white"
+          className="w-full max-w-[360px] px-6 py-5 overflow-y-auto m-5 rounded-[28px] border border-white flex-shrink-0"
           style={{
             boxShadow: '0 25px 80px rgba(72,93,138,0.18)',
           }}
@@ -1255,13 +1255,13 @@ export default function GeneratePage() {
           </div>
         </div>
 
-        <section className="flex-1 pr-8 py-6 overflow-y-auto">
-          <div className="max-w-5xl mx-auto">
-            <div className="rounded-[24px] border border-white shadow-[0_12px_40px_rgba(90,118,171,0.15)] px-5 py-5">
+        <section className="flex-1 pr-8 py-6 overflow-y-auto min-h-0">
+          <div className="max-w-5xl mx-auto h-full flex flex-col">
+            <div className="rounded-[24px] border border-white shadow-[0_12px_40px_rgba(90,118,171,0.15)] px-5 py-5 flex-shrink-0">
               <p className="text-h5 text-gray-900">Your ad creative will appear here.</p>
             </div>
 
-            <div className="flex items-center justify-center mt-5 min-h-[600px]">
+            <div className="flex items-center justify-center mt-5 flex-1 overflow-y-auto min-h-0">
               {renderCanvasContent()}
             </div>
           </div>
