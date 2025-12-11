@@ -427,22 +427,24 @@ export default function GeneratePage() {
   const renderLoadingState = () => {
     const activeDot = loadingMessageIndex % 4;
     return (
-      <div className="text-center space-y-6">
-        <div className="relative w-24 h-24 mx-auto">
-          <div className="absolute inset-0 rounded-full border-4 border-[#D7E5FF] border-t-[#3CA3F7] animate-spin" />
-          <div className="absolute inset-0 flex items-center justify-center text-3xl text-[#3CA3F7]">✦</div>
-        </div>
-        <div>
-          <p className="text-lg font-semibold text-gray-900">Generating...</p>
-          <p className="text-sm text-gray-500 mt-2">{LOADING_MESSAGES[loadingMessageIndex].text}</p>
-        </div>
-        <div className="flex justify-center gap-2">
-          {[0, 1, 2, 3].map((i) => (
-            <span
-              key={i}
-              className={`w-2 h-2 rounded-full ${i <= activeDot ? 'bg-[#3CA3F7]' : 'bg-gray-300'}`}
-            />
-          ))}
+      <div className="w-full flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-6 px-5 py-5">
+          <div className="relative w-24 h-24 mx-auto">
+            <div className="absolute inset-0 rounded-full border-4 border-[#D7E5FF] border-t-[#3CA3F7] animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center text-3xl text-[#3CA3F7]">✦</div>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-gray-900">Generating...</p>
+            <p className="text-sm text-gray-500 mt-2">{LOADING_MESSAGES[loadingMessageIndex].text}</p>
+          </div>
+          <div className="flex justify-center gap-2">
+            {[0, 1, 2, 3].map((i) => (
+              <span
+                key={i}
+                className={`w-2 h-2 rounded-full ${i <= activeDot ? 'bg-[#3CA3F7]' : 'bg-gray-300'}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -988,7 +990,7 @@ export default function GeneratePage() {
               <p className="text-h5 text-gray-900">Your ad creative will appear here.</p>
             </div>
 
-            <div className="min-h-[460px] flex items-center justify-center mt-5">
+            <div className="flex items-center justify-center mt-5 min-h-[600px]">
               {renderCanvasContent()}
             </div>
           </div>
