@@ -387,7 +387,7 @@ export default function GeneratePage() {
       setPresetStatus('Saved preset loaded automatically.');
     }
     
-    // 개별 필드 프리셋도 다시 로드
+    // 개별 필드 프리셋도 다시 로드 (초기 로드 로직과 동일)
     const fields: (keyof typeof savedFields)[] = ['targetAudience', 'travelTheme', 'brandStyle', 'layout', 'ratio'];
     const newSavedFields: Record<string, boolean> = {
       targetAudience: false,
@@ -397,18 +397,51 @@ export default function GeneratePage() {
       ratio: false,
     };
     
+    // 먼저 stored에서 값을 가져오고, 없으면 개별 필드 프리셋에서 가져옴
+    const loadedSettings = stored || settings;
+    
     fields.forEach((field) => {
       const savedValue = loadFieldPreset(field);
       if (savedValue) {
         const currentValue = 
-          field === 'targetAudience' ? (stored?.targetAudience || settings.targetAudience) :
-          field === 'travelTheme' ? (stored?.travelTheme || settings.travelTheme) :
-          field === 'brandStyle' ? (stored?.brandStyle || settings.brandStyle) :
-          field === 'layout' ? (stored?.layout || settings.layout) :
-          (stored?.ratio || settings.ratio);
+          field === 'targetAudience' ? loadedSettings.targetAudience :
+          field === 'travelTheme' ? loadedSettings.travelTheme :
+          field === 'brandStyle' ? loadedSettings.brandStyle :
+          field === 'layout' ? loadedSettings.layout :
+          loadedSettings.ratio;
         
-        if (savedValue === currentValue) {
+        // 저장된 값이 있으면 체크박스 상태 업데이트
+        if (savedValue === currentValue || !currentValue) {
           newSavedFields[field] = true;
+          
+          // 현재 값이 없으면 저장된 값으로 설정
+          if (!currentValue) {
+            if (field === 'targetAudience') {
+              const option = TARGET_AUDIENCE_OPTIONS.find((item) => item.value === savedValue);
+              if (option) {
+                updateSettings({
+                  targetAudience: savedValue,
+                  persona: option.persona ?? loadedSettings.persona,
+                  expression: option.expression ?? loadedSettings.expression,
+                });
+              }
+            } else if (field === 'travelTheme') {
+              const option = TRAVEL_THEME_OPTIONS.find((item) => item.value === savedValue);
+              if (option) {
+                updateSettings({
+                  travelTheme: savedValue,
+                  actionDetail: option.prompt ?? loadedSettings.actionDetail,
+                  timeOfDay: option.timeOfDay ?? loadedSettings.timeOfDay,
+                });
+              }
+            } else if (field === 'brandStyle') {
+              updateSettings({ brandStyle: savedValue });
+            } else if (field === 'layout') {
+              updateSettings({ layout: savedValue as 'center' | 'left' | 'right' | 'bottom' });
+            } else if (field === 'ratio') {
+              updateSettings({ ratio: savedValue });
+            }
+          }
         }
       }
     });
