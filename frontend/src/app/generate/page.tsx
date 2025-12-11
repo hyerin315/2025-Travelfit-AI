@@ -85,6 +85,29 @@ export default function GeneratePage() {
     layout: false,
     ratio: false,
   });
+  const [showReplaceModal, setShowReplaceModal] = useState(false);
+  const [pendingPresetAction, setPendingPresetAction] = useState<{
+    field: string;
+    value: string;
+    action: 'save' | 'remove' | 'startFresh';
+  } | null>(null);
+
+  // 프리셋이 하나라도 저장되어 있는지 확인 (현재 적용된 상태)
+  const hasAnyPreset = useMemo(() => {
+    return Object.values(savedFields).some((saved) => saved === true);
+  }, [savedFields]);
+
+  // 스토리지에 저장된 프리셋이 있는지 확인 (적용 여부와 무관)
+  const [hasStoredPreset, setHasStoredPreset] = useState(false);
+  
+  useEffect(() => {
+    // 스토리지에 프리셋이 있는지 확인
+    const stored = loadPresetFromStorage();
+    const hasFieldPreset = ['targetAudience', 'travelTheme', 'brandStyle', 'layout', 'ratio'].some(
+      (field) => loadFieldPreset(field) !== null
+    );
+    setHasStoredPreset(stored !== null || hasFieldPreset);
+  }, [savedFields]);
 
   const selectedAudience = useMemo(
     () => TARGET_AUDIENCE_OPTIONS.find((item) => item.value === settings.targetAudience),
@@ -138,6 +161,12 @@ export default function GeneratePage() {
       updateSettings(stored);
       setPresetStatus('Saved preset loaded automatically.');
     }
+    
+    // 스토리지에 프리셋이 있는지 확인
+    const hasFieldPreset = ['targetAudience', 'travelTheme', 'brandStyle', 'layout', 'ratio'].some(
+      (field) => loadFieldPreset(field) !== null
+    );
+    setHasStoredPreset(stored !== null || hasFieldPreset);
     
     // 개별 필드 프리셋 로드
     const fields: (keyof typeof savedFields)[] = ['targetAudience', 'travelTheme', 'brandStyle', 'layout', 'ratio'];
@@ -256,13 +285,40 @@ export default function GeneratePage() {
 
   const handleFieldPresetToggle = (fieldName: string, value: string) => {
     const isCurrentlySaved = savedFields[fieldName as keyof typeof savedFields];
-    if (isCurrentlySaved) {
+    
+    // CASE B 상태에서 체크박스 변경 시 모달 표시
+    if (hasAnyPreset && !isCurrentlySaved) {
+      // 저장하려는 경우 - 모달 표시
+      setPendingPresetAction({ field: fieldName, value, action: 'save' });
+      setShowReplaceModal(true);
+    } else if (isCurrentlySaved) {
+      // 해제하는 경우 - 바로 실행
       clearFieldPreset(fieldName);
       setSavedFields((prev) => ({ ...prev, [fieldName]: false }));
     } else {
+      // CASE A 또는 CASE C에서 저장하는 경우 - 바로 실행
       saveFieldPreset(fieldName, value);
       setSavedFields((prev) => ({ ...prev, [fieldName]: true }));
     }
+  };
+
+  const handleConfirmReplace = () => {
+    if (pendingPresetAction) {
+      if (pendingPresetAction.action === 'save') {
+        saveFieldPreset(pendingPresetAction.field, pendingPresetAction.value);
+        setSavedFields((prev) => ({ ...prev, [pendingPresetAction.field]: true }));
+      } else if (pendingPresetAction.action === 'startFresh') {
+        // Start Fresh 실행
+        executeStartFresh();
+      }
+      setPendingPresetAction(null);
+    }
+    setShowReplaceModal(false);
+  };
+
+  const handleCancelReplace = () => {
+    setPendingPresetAction(null);
+    setShowReplaceModal(false);
   };
 
   const handlePresetSave = () => {
@@ -293,8 +349,126 @@ export default function GeneratePage() {
     setPresetStatus('Saved preset cleared.');
   };
 
+  const handleStartWithoutPreset = () => {
+    // 저장된 프리셋은 스토리지에 그대로 유지
+    // 단지 현재 화면의 선택사항만 초기화 (CASE C 상태로 전환)
+    updateSettings({
+      location: settings.location, // location은 유지
+      spot: '',
+      targetAudience: '',
+      travelTheme: '',
+      brandStyle: '',
+      persona: '',
+      action: 'front',
+      actionDetail: '',
+      expression: '',
+      timeOfDay: 'auto',
+      layout: '',
+      ratio: '',
+    });
+    
+    // 체크박스 상태만 초기화 (프리셋은 삭제하지 않음)
+    setSavedFields({
+      targetAudience: false,
+      travelTheme: false,
+      brandStyle: false,
+      layout: false,
+      ratio: false,
+    });
+    
+    setPresetStatus(null);
+  };
+
+  const handleLoadPreset = () => {
+    // 저장된 프리셋을 다시 불러옴 (CASE B 상태로 복귀)
+    const stored = loadPresetFromStorage<GenerationSettings>();
+    if (stored) {
+      updateSettings(stored);
+      setPresetStatus('Saved preset loaded automatically.');
+    }
+    
+    // 개별 필드 프리셋도 다시 로드
+    const fields: (keyof typeof savedFields)[] = ['targetAudience', 'travelTheme', 'brandStyle', 'layout', 'ratio'];
+    const newSavedFields: Record<string, boolean> = {
+      targetAudience: false,
+      travelTheme: false,
+      brandStyle: false,
+      layout: false,
+      ratio: false,
+    };
+    
+    fields.forEach((field) => {
+      const savedValue = loadFieldPreset(field);
+      if (savedValue) {
+        const currentValue = 
+          field === 'targetAudience' ? (stored?.targetAudience || settings.targetAudience) :
+          field === 'travelTheme' ? (stored?.travelTheme || settings.travelTheme) :
+          field === 'brandStyle' ? (stored?.brandStyle || settings.brandStyle) :
+          field === 'layout' ? (stored?.layout || settings.layout) :
+          (stored?.ratio || settings.ratio);
+        
+        if (savedValue === currentValue) {
+          newSavedFields[field] = true;
+        }
+      }
+    });
+    
+    setSavedFields(newSavedFields);
+    setHasStoredPreset(true);
+  };
+
   const handleStartFresh = () => {
-    handlePresetClear();
+    // CASE A 또는 CASE C: 프리셋이 체크되어 있으면 모달 표시
+    const hasCheckedPresets = Object.values(savedFields).some((saved) => saved === true);
+    
+    if (hasCheckedPresets) {
+      // 모달 표시
+      setPendingPresetAction({ field: '', value: '', action: 'startFresh' });
+      setShowReplaceModal(true);
+    } else {
+      // 체크박스가 없으면 바로 실행
+      executeStartFresh();
+    }
+  };
+
+  const executeStartFresh = () => {
+    // CASE A: 프리셋이 없으면 빈 상태로 다시 시작
+    // CASE C: 프리셋이 있으면 CASE C 상태 유지 (프리셋 없이 새 작업)
+    if (!hasStoredPreset) {
+      // CASE A: 완전히 초기화
+      handlePresetClear();
+    } else {
+      // CASE C: 화면만 초기화하고 프리셋은 스토리지에 유지
+      updateSettings({
+        location: '',
+        spot: '',
+        targetAudience: '',
+        travelTheme: '',
+        brandStyle: '',
+        persona: '',
+        action: 'front',
+        actionDetail: '',
+        expression: '',
+        timeOfDay: 'auto',
+        layout: '',
+        ratio: '',
+      });
+      
+      setGenerationResult(null);
+      setStatus('idle');
+      setError(null);
+      
+      // 체크박스 상태 초기화
+      setSavedFields({
+        targetAudience: false,
+        travelTheme: false,
+        brandStyle: false,
+        layout: false,
+        ratio: false,
+      });
+      
+      setPresetStatus(null);
+    }
   };
 
   const handleGenerate = async () => {
@@ -361,6 +535,24 @@ export default function GeneratePage() {
 
       setGenerationResult(result);
       setStatus('success');
+      
+      // CASE C 상태에서 생성 성공 시 CASE B로 복귀 (프리셋 다시 로드)
+      // 단, 프리셋 체크한 경우에만 적용 상태 그대로 새 작업
+      if (!hasAnyPreset && hasStoredPreset) {
+        // 체크박스가 하나라도 체크되어 있으면 프리셋 다시 로드
+        const hasCheckedFields = ['targetAudience', 'travelTheme', 'brandStyle', 'layout', 'ratio'].some(
+          (field) => {
+            const savedValue = loadFieldPreset(field);
+            return savedValue !== null;
+          }
+        );
+        if (hasCheckedFields) {
+          handleLoadPreset();
+        }
+      }
+      
+      // CASE A에서 프리셋 체크한 경우, 다음 생성 시 적용 상태 그대로 새 작업
+      // (체크박스 상태는 이미 저장되어 있으므로 다음 생성 시 자동으로 적용됨)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate images. Please try again.');
       setStatus('error');
@@ -548,7 +740,41 @@ export default function GeneratePage() {
             boxShadow: '0 25px 80px rgba(72,93,138,0.18)',
           }}
         >
-          <h2 className="text-h5 text-gray-900 mb-5">Customization</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-h5 text-gray-900">Customization</h2>
+            <div className="flex items-center gap-3">
+              {hasAnyPreset ? (
+                <>
+                  {/* CASE B: 프리셋 적용됨 */}
+                  <div className="px-4 py-2 rounded-lg bg-blue-50 text-blue-600 text-sm font-medium">
+                    Brand preset loaded
+                  </div>
+                  <button
+                    onClick={handleStartWithoutPreset}
+                    className="text-sm text-gray-600 underline hover:text-gray-900 transition"
+                  >
+                    Start without preset
+                  </button>
+                </>
+              ) : hasStoredPreset ? (
+                <>
+                  {/* CASE C: 프리셋 저장됨, 적용 안 됨 */}
+                  <div className="px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium">
+                    No preset applied
+                  </div>
+                  <button
+                    onClick={handleLoadPreset}
+                    className="text-sm text-gray-600 underline hover:text-gray-900 transition"
+                  >
+                    Load preset
+                  </button>
+                </>
+              ) : (
+                // CASE A: 프리셋 없음 - 상태 표시 없음
+                null
+              )}
+            </div>
+          </div>
           <div className="space-y-6">
             <div>
               <label className="block text-body-m-bold text-gray-800 mb-[14px]">
@@ -996,6 +1222,47 @@ export default function GeneratePage() {
           </div>
         </section>
       </div>
+
+      {/* Replace Preset Modal */}
+      {showReplaceModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={handleCancelReplace}>
+          <div className="bg-white rounded-2xl p-6 max-w-md mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {pendingPresetAction?.action === 'startFresh' 
+                    ? 'Clear brand preset?' 
+                    : 'Replace current brand preset?'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {pendingPresetAction?.action === 'startFresh'
+                    ? 'Starting fresh will clear all saved brand presets.'
+                    : 'Saving this will overwrite your current brand preset.'}
+                </p>
+              </div>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={handleCancelReplace}
+                  className="flex-1 px-4 py-2 border border-blue-500 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmReplace}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                >
+                  {pendingPresetAction?.action === 'startFresh' ? 'Clear' : 'Replace'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
