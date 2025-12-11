@@ -450,6 +450,25 @@ export default function GeneratePage() {
 
   const renderSuccessState = () => {
     if (!generationResult) return null;
+    
+    // 비율에 따른 aspect ratio 클래스 매핑
+    const getAspectRatioClass = (ratio: string) => {
+      switch (ratio) {
+        case '1:1':
+          return 'aspect-square';
+        case '16:9':
+          return 'aspect-video';
+        case '9:16':
+          return 'aspect-[9/16]';
+        case '4:5':
+          return 'aspect-[4/5]';
+        default:
+          return 'aspect-[4/3]'; // 기본값
+      }
+    };
+    
+    const aspectRatioClass = getAspectRatioClass(settings.ratio);
+    
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -458,7 +477,7 @@ export default function GeneratePage() {
               key={image.image_id}
               className="bg-white/90 border border-white/70 rounded-[28px] shadow-[0_18px_45px_rgba(90,118,171,0.16)] p-4 flex flex-col gap-4"
             >
-              <div className="rounded-[20px] bg-[#EEF3FF] aspect-[4/3] overflow-hidden flex items-center justify-center">
+              <div className={`rounded-[20px] bg-[#EEF3FF] ${aspectRatioClass} overflow-hidden flex items-center justify-center`}>
                 <img
                   src={`data:image/png;base64,${image.base64}`}
                   alt={`Generated ${idx + 1}`}
@@ -473,20 +492,6 @@ export default function GeneratePage() {
               </button>
             </div>
           ))}
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={handleGenerate}
-            className="flex-1 min-w-[160px] rounded-2xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] text-white font-semibold py-3 shadow-lg hover:opacity-95 transition"
-          >
-            Create Another
-          </button>
-          <button
-            onClick={handleStartFresh}
-            className="flex-1 min-w-[160px] rounded-2xl border border-[#C2D2EA] text-[#1A2C54] font-semibold py-3 bg-white/80 hover:border-[#8FA5C9] transition"
-          >
-            Start Fresh
-          </button>
         </div>
       </div>
     );
@@ -966,14 +971,32 @@ export default function GeneratePage() {
               </label>
             </div>
 
-            <button
-              onClick={handleGenerate}
-              disabled={!settings.location.trim() || status === 'loading'}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] h-[60px] text-white text-body-l-bold shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <img src="/assets/icons/star.svg" alt="Star" className="w-[19px] h-[18px]" />
-              <span>Generate Creative</span>
-            </button>
+            {status === 'success' && generationResult ? (
+              <>
+                <button
+                  onClick={handleGenerate}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] h-[60px] text-white text-body-l-bold shadow-lg hover:shadow-xl transition"
+                >
+                  <img src="/assets/icons/star.svg" alt="Star" className="w-[19px] h-[18px]" />
+                  <span>Create Another</span>
+                </button>
+                <button
+                  onClick={handleStartFresh}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#C2D2EA] text-[#1A2C54] font-semibold h-[60px] bg-white/80 hover:border-[#8FA5C9] transition mt-3"
+                >
+                  <span>Start Fresh</span>
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleGenerate}
+                disabled={!settings.location.trim() || status === 'loading'}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00A5B8] to-[#4E4BEA] h-[60px] text-white text-body-l-bold shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <img src="/assets/icons/star.svg" alt="Star" className="w-[19px] h-[18px]" />
+                <span>Generate Creative</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -983,7 +1006,7 @@ export default function GeneratePage() {
               <p className="text-h5 text-gray-900">Your ad creative will appear here.</p>
             </div>
 
-            <div className="min-h-[460px] flex items-center justify-center mt-[100px]">
+            <div className="min-h-[460px] flex items-center justify-center mt-6">
               {renderCanvasContent()}
             </div>
           </div>
