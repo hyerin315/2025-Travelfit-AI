@@ -148,9 +148,9 @@ class PromptEngine:
         return persona_prompt
     
     def _build_location_prompt(self, location: str) -> str:
-        """장소 프롬프트 생성 - LOCATION_DATA를 활용하여 구체적인 랜드마크 프롬프트 삽입"""
+        """장소 프롬프트 생성 - LOCATION_DATA를 활용하여 구체적인 랜드마크 프롬프트 삽입 (최우선 가중치)"""
         if not location or not location.strip():
-            return "iconic travel destination, beautiful scenery"
+            return "(iconic travel destination:1.4), (beautiful scenery:1.3)"
         
         # Spot이 포함된 경우 (예: "Central Park, New York") 처리
         # 콤마로 분리하여 Spot과 City를 구분
@@ -179,7 +179,7 @@ class PromptEngine:
             # 가장 매칭된 결과 사용
             matched_location = search_results[0]
             
-            # 랜드마크 프롬프트가 있으면 우선 사용
+            # 랜드마크 프롬프트가 있으면 우선 사용 (가중치 강화)
             if matched_location.get("landmark_prompt"):
                 landmark_prompt = matched_location["landmark_prompt"]
                 # 도시/국가 정보 추가
@@ -190,11 +190,11 @@ class PromptEngine:
                     city_country += matched_location["country_en"]
                 
                 if city_country:
-                    return f"at {city_country}, {landmark_prompt}, iconic travel destination, beautiful scenery, recognizable landmark visible in background"
+                    return f"({city_country}:1.6), ({landmark_prompt}:1.7), (iconic travel destination:1.5), (beautiful scenery:1.4), (recognizable landmark visible in background:1.6), (distinctive location features:1.5)"
                 else:
-                    return f"{landmark_prompt}, iconic travel destination, beautiful scenery, recognizable landmark visible in background"
+                    return f"({landmark_prompt}:1.7), (iconic travel destination:1.5), (beautiful scenery:1.4), (recognizable landmark visible in background:1.6), (distinctive location features:1.5)"
             
-            # 랜드마크 프롬프트가 없으면 기본 정보 사용 (placeholder 제거)
+            # 랜드마크 프롬프트가 없으면 기본 정보 사용 (가중치 강화)
             display_name = matched_location.get("display_name_en") or matched_location.get("display_name_kr") or location
             city_country = ""
             if matched_location.get("city_en"):
@@ -203,11 +203,11 @@ class PromptEngine:
                 city_country += matched_location["country_en"]
             
             if city_country:
-                return f"at {city_country}, {display_name}, iconic travel destination, beautiful scenery, recognizable landmark visible in background, regional architecture style"
+                return f"({city_country}:1.6), ({display_name}:1.7), (iconic travel destination:1.5), (beautiful scenery:1.4), (recognizable landmark visible in background:1.6), (regional architecture style:1.5), (distinctive location features:1.5)"
             else:
-                return f"at {display_name}, iconic travel destination, beautiful scenery, recognizable landmark visible in background, regional architecture style"
+                return f"({display_name}:1.7), (iconic travel destination:1.5), (beautiful scenery:1.4), (recognizable landmark visible in background:1.6), (regional architecture style:1.5), (distinctive location features:1.5)"
         
-        # 매칭되지 않으면 기본 처리 (기존 로직 유지)
+        # 매칭되지 않으면 기본 처리 (가중치 강화)
         location_hints = {
             "파리": "Paris",
             "에펠탑": "Eiffel Tower",
@@ -230,8 +230,8 @@ class PromptEngine:
         for kor, eng in location_hints.items():
             location_english = location_english.replace(kor, eng)
         
-        # placeholder 제거, 구체적인 장소 정보만 포함
-        return f"at {location_english}, iconic travel destination, beautiful scenery, recognizable landmark visible in background, regional architecture style"
+        # 장소 정보에 높은 가중치 부여
+        return f"({location_english}:1.7), (iconic travel destination:1.5), (beautiful scenery:1.4), (recognizable landmark visible in background:1.6), (regional architecture style:1.5), (distinctive location features:1.5)"
     
     def _build_lighting_prompt(self, preset: BrandPreset, time_of_day: str) -> str:
         """시간대/조명 프롬프트 생성"""
@@ -288,7 +288,7 @@ class PromptEngine:
                 f"{common_base}, "
                 "person in background, figure in distance, facing away from camera, "
                 "back view, subjects captured from back view, candidly looking away from camera"
-            )
+        )
     
     def _build_quality_prompt(self) -> str:
         """
@@ -316,17 +316,19 @@ class PromptEngine:
         width: int = None,
         height: int = None
     ) -> str:
-        """모든 프롬프트 요소를 하나로 조합하고 중복 제거"""
-        # 모든 프롬프트 요소를 리스트로 수집
+        """모든 프롬프트 요소를 하나로 조합하고 중복 제거 (장소 최우선)"""
+        # 장소를 최우선으로 배치하고, Brand Style/Travel Theme는 낮은 가중치로 뒤에 배치
+        # Stable Diffusion에서는 앞부분이 더 중요하게 반영되므로 순서가 중요함
         prompt_parts = [
-            base_prompt,
-            persona_prompt,
-            location_prompt,
-            lighting_prompt,
-            layout_prompt,
-            style_tone,
-            color_grade,
-            quality_prompt
+            location_prompt,  # 1순위: 장소 (최우선)
+            base_prompt,      # 2순위: 기본 방향성
+            persona_prompt,   # 3순위: 인물
+            lighting_prompt,  # 4순위: 조명/시간대
+            layout_prompt,    # 5순위: 레이아웃
+            quality_prompt,   # 6순위: 품질
+            # Brand Style과 Travel Theme는 낮은 가중치로 뒤에 배치
+            f"({style_tone}:0.8)" if style_tone else "",  # Brand Style (가중치 낮춤)
+            f"({color_grade}:0.8)" if color_grade else "",  # Brand Style (가중치 낮춤)
         ]
         
         # 빈 문자열 제거 및 공백 정리

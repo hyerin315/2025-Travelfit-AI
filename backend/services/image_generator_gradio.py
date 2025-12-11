@@ -199,7 +199,7 @@ class GradioImageGenerator:
                             predict_params.pop("height", None)
                             result = client.predict(**predict_params)
                             logger.info(f"✅ 이미지 {idx+1} 생성 성공 (프롬프트에 크기 정보 포함)")
-                            break  # 성공 시 루프 탈출
+                        break  # 성공 시 루프 탈출
                         
                     except Exception as e:
                         retry_count += 1
